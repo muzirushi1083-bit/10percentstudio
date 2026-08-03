@@ -36,7 +36,7 @@ html, body {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 16px;
 }
 
 .ui-header {
@@ -81,7 +81,7 @@ html, body {
   max-width: 400px;
   display: flex;
   gap: 16px;
-  margin: 12px 0;
+  margin: 8px 0;
   z-index: 10;
 }
 
@@ -132,20 +132,20 @@ html, body {
   align-items: center;
   width: 100%;
   max-width: 400px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .grid-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   aspect-ratio: 1;
   background: var(--panel-bg);
   border: 2px solid rgba(255, 0, 85, 0.4);
   border-radius: 20px;
-  padding: 12px;
+  padding: 10px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -166,7 +166,6 @@ html, body {
   transform: scale(0.95);
 }
 
-/* Ultra-bright Yellow Selection Glow */
 .cell.selected {
   border: 3px solid #ffe600 !important;
   box-shadow: 0 0 25px #ffe600, inset 0 0 15px rgba(255, 230, 0, 0.4) !important;
@@ -181,13 +180,13 @@ html, body {
 }
 
 .tile-icon {
-  font-size: 32px;
+  font-size: 30px;
   pointer-events: none;
 }
 
 .tile-level {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   margin-top: 2px;
   color: #fff;
@@ -223,6 +222,28 @@ html, body {
 .tile-potion {
   background: rgba(255, 230, 0, 0.2);
   border-color: rgba(255, 230, 0, 0.6);
+}
+
+/* Utility Bar */
+.utility-bar {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.btn-shuffle {
+  font-size: 12px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--secondary-neon);
+}
+
+.btn-shuffle:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--secondary-neon);
 }
 
 /* Overlays */

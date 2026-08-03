@@ -7,6 +7,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const gameoverScreen = document.getElementById('gameover-screen');
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
+  const shuffleBtn = document.getElementById('shuffle-btn');
   
   const floorDisplay = document.getElementById('floor-display');
   const goldDisplay = document.getElementById('gold-display');
@@ -33,7 +34,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Pass UI update callback to game instance (Event-Driven)
   const game = new DungeonMergeGame(gridContainer, updateUIHeader);
 
   function startGame() {
@@ -56,13 +56,16 @@ window.addEventListener('DOMContentLoaded', () => {
     game.start();
   });
 
-  // Start Screen Click Event
+  shuffleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    game.shuffleBoard();
+  });
+
   startScreen.addEventListener('click', (e) => {
     if (e.target.tagName !== 'A' && !e.target.classList.contains('btn-portal')) {
       startGame();
     }
   });
 
-  // Initial setup render
   game.start();
 });
