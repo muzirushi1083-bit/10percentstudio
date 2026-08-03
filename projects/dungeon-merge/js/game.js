@@ -36,8 +36,6 @@ export class DungeonMergeGame {
 
   initBoard() {
     this.board = Array(this.GRID_SIZE * this.GRID_SIZE).fill(null);
-    
-    // Fill initial 8 tiles
     for (let i = 0; i < 8; i++) {
       this.spawnRandomTile();
     }
@@ -53,29 +51,27 @@ export class DungeonMergeGame {
 
     const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
     
-    // Determine tile type
-    const types = ['sword', 'sword', 'shield', 'potion', 'monster'];
-    // 5th Floor Boss Spawn
     if (this.floor % 5 === 0 && !this.board.some(t => t && t.type === 'boss')) {
       this.board[randomIndex] = {
         type: 'boss',
         level: Math.floor(this.floor / 5),
-        hp: 50 + this.floor * 20,
-        maxHp: 50 + this.floor * 20,
-        atk: 25 + this.floor * 5
+        hp: 40 + this.floor * 15,
+        maxHp: 40 + this.floor * 15,
+        atk: 15 + this.floor * 3
       };
       return;
     }
 
+    const types = ['sword', 'sword', 'shield', 'potion', 'monster'];
     const type = types[Math.floor(Math.random() * types.length)];
     
     if (type === 'monster') {
       this.board[randomIndex] = {
         type: 'monster',
         level: 1,
-        hp: 15 + this.floor * 8,
-        maxHp: 15 + this.floor * 8,
-        atk: 8 + this.floor * 3
+        hp: 12 + this.floor * 6,
+        maxHp: 12 + this.floor * 6,
+        atk: 6 + this.floor * 2
       };
     } else {
       this.board[randomIndex] = {
@@ -91,10 +87,10 @@ export class DungeonMergeGame {
 
     const clickedTile = this.board[index];
 
-    // If nothing selected yet
-    if (!this.selectedCell) {
+    // Case 1: No cell currently selected
+    if (this.selectedCell === null) {
       if (clickedTile) {
-        // Direct Action Tiles (Potion & Shield)
+        // Direct consumable actions
         if (clickedTile.type === 'potion') {
           this.usePotion(index);
           this.endTurn();
@@ -104,13 +100,13 @@ export class DungeonMergeGame {
           this.endTurn();
           return;
         }
-
+        // Select sword, monster, or boss for action
         this.selectedCell = index;
       }
       return;
     }
 
-    // Same cell clicked -> Deselect
+    // Case 2: Clicked same cell -> Deselect
     if (this.selectedCell === index) {
       this.selectedCell = null;
       return;
@@ -118,7 +114,7 @@ export class DungeonMergeGame {
 
     const sourceTile = this.board[this.selectedCell];
 
-    // If target is empty -> Move tile
+    // Case 3: Move to empty cell
     if (!clickedTile) {
       this.board[index] = sourceTile;
       this.board[this.selectedCell] = null;
@@ -127,7 +123,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Attempt MERGE (Same type & level)
+    // Case 4: Merge same type & level (Swords, Potion, Shield)
     if (sourceTile.type === clickedTile.type && sourceTile.level === clickedTile.level && sourceTile.type !== 'monster' && sourceTile.type !== 'boss') {
       clickedTile.level += 1;
       this.board[this.selectedCell] = null;
@@ -137,28 +133,24 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Attempt ATTACK (Sword onto Monster/Boss)
+    // Case 5: Attack Monster / Boss with Sword
     if (sourceTile.type === 'sword' && (clickedTile.type === 'monster' || clickedTile.type === 'boss')) {
-      const damage = (this.player.baseAttack + sourceTile.level * 15);
+      const damage = this.player.baseAttack + (sourceTile.level * 12);
       clickedTile.hp -= damage;
       soundEngine.playAttack();
 
-      // Monster Defeated!
       if (clickedTile.hp <= 0) {
         soundEngine.playMerge();
         this.kills++;
         this.gold += clickedTile.type === 'boss' ? 50 : 10;
+        this.board[index] = null; // Monster destroyed
+        this.board[this.selectedCell] = null; // Sword consumed
         
-        // Remove Monster & Sword
-        this.board[index] = null;
-        this.board[this.selectedCell] = null;
-        
-        // Check Floor Clear (Boss or Kills threshold)
-        if (clickedTile.type === 'boss' || this.kills % 5 === 0) {
+        if (clickedTile.type === 'boss' || this.kills % 4 === 0) {
           this.floor++;
         }
       } else {
-        // Sword consumed in attack
+        // Sword consumed in strike
         this.board[this.selectedCell] = null;
       }
 
@@ -167,7 +159,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Otherwise change selection to clicked tile
+    // Default: Change selection
     this.selectedCell = index;
   }
 
@@ -188,7 +180,7 @@ export class DungeonMergeGame {
   }
 
   endTurn() {
-    // Monsters Attack Player!
+    // Monsters Attack
     this.board.forEach(tile => {
       if (tile && (tile.type === 'monster' || tile.type === 'boss')) {
         let dmg = tile.atk;
@@ -201,7 +193,6 @@ export class DungeonMergeGame {
             this.player.shield = 0;
           }
         }
-        
         if (dmg > 0) {
           this.player.hp -= dmg;
           soundEngine.playDamage();
@@ -209,14 +200,12 @@ export class DungeonMergeGame {
       }
     });
 
-    // Check Game Over
     if (this.player.hp <= 0) {
       this.player.hp = 0;
       this.state = 'GAMEOVER';
       return;
     }
 
-    // Spawn new tile into empty cell
     this.spawnRandomTile();
   }
 
@@ -248,7 +237,11 @@ export class DungeonMergeGame {
         `;
       }
 
-      cell.addEventListener('click', () => this.handleCellClick(index));
+      cell.onclick = (e) => {
+        e.preventDefault();
+        this.handleCellClick(index);
+      };
+
       this.gridElement.appendChild(cell);
     });
   }

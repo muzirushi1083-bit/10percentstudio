@@ -44,14 +44,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  startBtn.addEventListener('click', () => {
+  // Start immediately upon page load if overlay is clicked or start btn
+  function startGame() {
     soundEngine.init();
     startScreen.classList.remove('active');
     startScreen.classList.add('hidden');
     game.start();
     gameLoop();
-  });
+  }
 
+  startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', () => {
     soundEngine.init();
     gameoverScreen.classList.remove('active');
@@ -60,6 +62,14 @@ window.addEventListener('DOMContentLoaded', () => {
     gameLoop();
   });
 
-  // Initial render for board background
-  game.renderBoard();
+  // Auto-start if clicked anywhere on start screen overlay
+  startScreen.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'A') {
+      startGame();
+    }
+  });
+
+  // Initial setup & start
+  game.start();
+  gameLoop();
 });
