@@ -16,9 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const finalFloor = document.getElementById('final-floor');
   const finalKills = document.getElementById('final-kills');
 
-  const game = new DungeonMergeGame(gridContainer);
-
-  function updateUI() {
+  function updateUIHeader() {
     floorDisplay.textContent = `F ${game.floor}`;
     goldDisplay.textContent = `${game.gold} G`;
     
@@ -26,8 +24,6 @@ window.addEventListener('DOMContentLoaded', () => {
     hpBarFill.style.width = `${hpPct}%`;
     hpText.textContent = `${game.player.hp}/${game.player.maxHp}`;
     shieldText.textContent = `${game.player.shield}`;
-
-    game.renderBoard();
 
     if (game.state === 'GAMEOVER') {
       finalFloor.textContent = `F ${game.floor}`;
@@ -37,39 +33,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function gameLoop() {
-    updateUI();
-    if (game.state === 'PLAYING') {
-      requestAnimationFrame(gameLoop);
-    }
-  }
+  // Pass UI update callback to game instance (Event-Driven)
+  const game = new DungeonMergeGame(gridContainer, updateUIHeader);
 
-  // Start immediately upon page load if overlay is clicked or start btn
   function startGame() {
     soundEngine.init();
     startScreen.classList.remove('active');
     startScreen.classList.add('hidden');
     game.start();
-    gameLoop();
   }
 
-  startBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', () => {
+  startBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame();
+  });
+
+  restartBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     soundEngine.init();
     gameoverScreen.classList.remove('active');
     gameoverScreen.classList.add('hidden');
     game.start();
-    gameLoop();
   });
 
-  // Auto-start if clicked anywhere on start screen overlay
+  // Start Screen Click Event
   startScreen.addEventListener('click', (e) => {
-    if (e.target.tagName !== 'A') {
+    if (e.target.tagName !== 'A' && !e.target.classList.contains('btn-portal')) {
       startGame();
     }
   });
 
-  // Initial setup & start
+  // Initial setup render
   game.start();
-  gameLoop();
 });

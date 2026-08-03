@@ -143,66 +143,86 @@ html, body {
   width: 100%;
   aspect-ratio: 1;
   background: var(--panel-bg);
-  border: 1px solid rgba(255, 0, 85, 0.3);
+  border: 2px solid rgba(255, 0, 85, 0.4);
   border-radius: 20px;
   padding: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .cell {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
   position: relative;
 }
 
-.cell:hover {
-  border-color: var(--secondary-neon);
-  transform: scale(1.02);
+.cell:active {
+  transform: scale(0.95);
 }
 
+/* Ultra-bright Yellow Selection Glow */
 .cell.selected {
-  border-color: var(--accent-neon);
-  box-shadow: 0 0 15px var(--accent-neon);
-  transform: scale(1.05);
+  border: 3px solid #ffe600 !important;
+  box-shadow: 0 0 25px #ffe600, inset 0 0 15px rgba(255, 230, 0, 0.4) !important;
+  transform: scale(1.06) !important;
+  z-index: 10;
+  animation: pulseYellow 0.8s infinite alternate;
+}
+
+@keyframes pulseYellow {
+  from { box-shadow: 0 0 15px #ffe600; }
+  to { box-shadow: 0 0 30px #ffe600, inset 0 0 20px rgba(255, 230, 0, 0.6); }
 }
 
 .tile-icon {
-  font-size: 28px;
+  font-size: 32px;
+  pointer-events: none;
 }
 
 .tile-level {
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   margin-top: 2px;
-  color: var(--text-sub);
+  color: #fff;
+  pointer-events: none;
 }
 
 .tile-monster {
-  background: rgba(255, 0, 85, 0.15);
-  border-color: rgba(255, 0, 85, 0.4);
+  background: rgba(255, 0, 85, 0.2);
+  border-color: rgba(255, 0, 85, 0.6);
+}
+
+.tile-boss {
+  background: rgba(255, 0, 0, 0.35);
+  border-color: #ff0000;
+  animation: pulseBoss 1s infinite alternate;
+}
+
+@keyframes pulseBoss {
+  from { border-color: #ff0000; }
+  to { border-color: #ffaa00; box-shadow: 0 0 15px #ff0000; }
 }
 
 .tile-sword {
-  background: rgba(0, 240, 255, 0.15);
-  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.2);
+  border-color: rgba(0, 240, 255, 0.6);
 }
 
 .tile-shield {
-  background: rgba(0, 255, 170, 0.15);
-  border-color: rgba(0, 255, 170, 0.4);
+  background: rgba(0, 255, 170, 0.2);
+  border-color: rgba(0, 255, 170, 0.6);
 }
 
 .tile-potion {
-  background: rgba(255, 230, 0, 0.15);
-  border-color: rgba(255, 230, 0, 0.4);
+  background: rgba(255, 230, 0, 0.2);
+  border-color: rgba(255, 230, 0, 0.6);
 }
 
 /* Overlays */

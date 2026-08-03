@@ -1,8 +1,9 @@
 import { soundEngine } from './audio.js';
 
 export class DungeonMergeGame {
-  constructor(gridElement) {
+  constructor(gridElement, onUIUpdate) {
     this.gridElement = gridElement;
+    this.onUIUpdate = onUIUpdate;
     this.GRID_SIZE = 4;
     
     this.state = 'START'; // START, PLAYING, GAMEOVER
@@ -32,6 +33,8 @@ export class DungeonMergeGame {
     
     this.initBoard();
     this.state = 'PLAYING';
+    this.renderBoard();
+    if (this.onUIUpdate) this.onUIUpdate();
   }
 
   initBoard() {
@@ -54,7 +57,7 @@ export class DungeonMergeGame {
     if (this.floor % 5 === 0 && !this.board.some(t => t && t.type === 'boss')) {
       this.board[randomIndex] = {
         type: 'boss',
-        level: Math.floor(this.floor / 5),
+        level: Math.floor(this.floor / 5) || 1,
         hp: 40 + this.floor * 15,
         maxHp: 40 + this.floor * 15,
         atk: 15 + this.floor * 3
@@ -87,10 +90,9 @@ export class DungeonMergeGame {
 
     const clickedTile = this.board[index];
 
-    // Case 1: No cell currently selected
+    // Case 1: No cell selected
     if (this.selectedCell === null) {
       if (clickedTile) {
-        // Direct consumable actions
         if (clickedTile.type === 'potion') {
           this.usePotion(index);
           this.endTurn();
@@ -100,8 +102,10 @@ export class DungeonMergeGame {
           this.endTurn();
           return;
         }
-        // Select sword, monster, or boss for action
+        // Select cell (turns YELLOW)
         this.selectedCell = index;
+        this.renderBoard();
+        if (this.onUIUpdate) this.onUIUpdate();
       }
       return;
     }
@@ -109,6 +113,8 @@ export class DungeonMergeGame {
     // Case 2: Clicked same cell -> Deselect
     if (this.selectedCell === index) {
       this.selectedCell = null;
+      this.renderBoard();
+      if (this.onUIUpdate) this.onUIUpdate();
       return;
     }
 
@@ -123,7 +129,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Case 4: Merge same type & level (Swords, Potion, Shield)
+    // Case 4: Merge same type & level
     if (sourceTile.type === clickedTile.type && sourceTile.level === clickedTile.level && sourceTile.type !== 'monster' && sourceTile.type !== 'boss') {
       clickedTile.level += 1;
       this.board[this.selectedCell] = null;
@@ -143,14 +149,13 @@ export class DungeonMergeGame {
         soundEngine.playMerge();
         this.kills++;
         this.gold += clickedTile.type === 'boss' ? 50 : 10;
-        this.board[index] = null; // Monster destroyed
-        this.board[this.selectedCell] = null; // Sword consumed
+        this.board[index] = null;
+        this.board[this.selectedCell] = null;
         
         if (clickedTile.type === 'boss' || this.kills % 4 === 0) {
           this.floor++;
         }
       } else {
-        // Sword consumed in strike
         this.board[this.selectedCell] = null;
       }
 
@@ -159,8 +164,10 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Default: Change selection
+    // Default: Switch selection to newly clicked tile
     this.selectedCell = index;
+    this.renderBoard();
+    if (this.onUIUpdate) this.onUIUpdate();
   }
 
   usePotion(index) {
@@ -203,10 +210,12 @@ export class DungeonMergeGame {
     if (this.player.hp <= 0) {
       this.player.hp = 0;
       this.state = 'GAMEOVER';
-      return;
+    } else {
+      this.spawnRandomTile();
     }
 
-    this.spawnRandomTile();
+    this.renderBoard();
+    if (this.onUIUpdate) this.onUIUpdate();
   }
 
   renderBoard() {
@@ -215,7 +224,11 @@ export class DungeonMergeGame {
     this.board.forEach((tile, index) => {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      if (this.selectedCell === index) cell.classList.add('selected');
+      
+      // Explicit yellow selection class
+      if (this.selectedCell === index) {
+        cell.classList.add('selected');
+      }
       
       if (tile) {
         cell.classList.add(`tile-${tile.type}`);
@@ -237,7 +250,7 @@ export class DungeonMergeGame {
         `;
       }
 
-      cell.onclick = (e) => {
+      cell.onpointerdown = (e) => {
         e.preventDefault();
         this.handleCellClick(index);
       };
