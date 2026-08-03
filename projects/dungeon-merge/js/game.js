@@ -55,16 +55,15 @@ export class ChronoBounceGame {
   generateStageBlocks() {
     this.blocks = [];
     const cols = 6;
-    const rows = 4 + Math.min(Math.floor(this.stage / 2), 4);
+    const rows = 4;
     const blockWidth = (this.width - 60) / cols;
     const blockHeight = 36;
     const startY = 100;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        // 65% spawn chance
-        if (Math.random() < 0.65) {
-          const hp = this.stage * 3 + Math.floor(Math.random() * 5);
+        if (Math.random() < 0.7) {
+          const hp = this.stage * 3 + Math.floor(Math.random() * 4);
           this.blocks.push({
             x: 30 + c * blockWidth,
             y: startY + r * (blockHeight + 8),
@@ -84,7 +83,7 @@ export class ChronoBounceGame {
     soundEngine.init();
     soundEngine.playSlowMo();
     this.isAiming = true;
-    this.targetTimeScale = 0.15; // SLOW-MOTION BIND
+    this.targetTimeScale = 0.15;
     this.updateAim(x, y);
   }
 
@@ -104,7 +103,6 @@ export class ChronoBounceGame {
   updateAim(x, y) {
     const dx = x - this.shooter.x;
     const dy = y - this.shooter.y;
-    // Limit angle upward
     let angle = Math.atan2(dy, dx);
     if (angle > -0.2) angle = -0.2;
     if (angle < -Math.PI + 0.2) angle = -Math.PI + 0.2;
@@ -118,10 +116,7 @@ export class ChronoBounceGame {
   }
 
   update() {
-    // Time Scale interpolation
     this.timeScale += (this.targetTimeScale - this.timeScale) * 0.2;
-
-    // Screen Shake decay
     if (this.shake > 0) this.shake *= 0.9;
 
     // Fire laser balls sequentially
@@ -146,23 +141,18 @@ export class ChronoBounceGame {
     // Update laser balls physics
     for (let i = this.balls.length - 1; i >= 0; i--) {
       const b = this.balls[i];
-
-      // Move scaled by time
       b.x += b.vx * this.timeScale;
       b.y += b.vy * this.timeScale;
 
-      // Wall Collisions
       if (b.x - b.radius < 0) { b.x = b.radius; b.vx *= -1; soundEngine.playBounce(); }
       if (b.x + b.radius > this.width) { b.x = this.width - b.radius; b.vx *= -1; soundEngine.playBounce(); }
       if (b.y - b.radius < 60) { b.y = 60 + b.radius; b.vy *= -1; soundEngine.playBounce(); }
 
-      // Bottom boundary -> Ball destroyed
       if (b.y > this.height) {
         this.balls.splice(i, 1);
         continue;
       }
 
-      // Block Collisions
       for (let j = this.blocks.length - 1; j >= 0; j--) {
         const blk = this.blocks[j];
         if (this.checkCollision(b, blk)) {
@@ -171,7 +161,6 @@ export class ChronoBounceGame {
           this.comboCount++;
           soundEngine.playBounce();
 
-          // Spawn sparkle particles
           this.spawnSparkles(b.x, b.y, blk.hue);
 
           if (blk.hp <= 0) {
@@ -199,9 +188,27 @@ export class ChronoBounceGame {
       this.state = 'AIMING';
     }
 
-    // Check Turn End (All balls fell)
+    // Check Turn End -> Descend Blocks & Check GAMEOVER
     if (this.state === 'FIRING' && this.balls.length === 0 && this.ballsToFire === 0) {
-      this.state = 'AIMING';
+      // Descend all blocks by 1 row step
+      const stepY = 44;
+      let isGameOver = false;
+
+      this.blocks.forEach(blk => {
+        blk.y += stepY;
+        // GAMEOVER CONDITION: If any block touches the bottom shooter line (shooter.y - 40)
+        if (blk.y + blk.h >= this.shooter.y - 20) {
+          isGameOver = true;
+        }
+      });
+
+      if (isGameOver) {
+        soundEngine.playGameOver();
+        this.state = 'GAMEOVER';
+      } else {
+        // Spawn 1 new top row if needed
+        this.state = 'AIMING';
+      }
     }
 
     // Update Particles
@@ -221,7 +228,6 @@ export class ChronoBounceGame {
     const dy = ball.y - nearestY;
     
     if (dx * dx + dy * dy < ball.radius * ball.radius) {
-      // Simple bounce normal
       if (Math.abs(dx) > Math.abs(dy)) ball.vx *= -1;
       else ball.vy *= -1;
       return true;
@@ -259,7 +265,6 @@ export class ChronoBounceGame {
 
   draw() {
     this.ctx.save();
-    // Screen Shake Transform
     if (this.shake > 0.5) {
       const rx = (Math.random() - 0.5) * this.shake;
       const ry = (Math.random() - 0.5) * this.shake;
@@ -267,6 +272,17 @@ export class ChronoBounceGame {
     }
 
     this.ctx.clearRect(0, 0, this.width, this.height);
+
+    // Draw Danger Deadline
+    this.ctx.save();
+    this.ctx.strokeStyle = 'rgba(255, 0, 85, 0.4)';
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([6, 6]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, this.shooter.y - 20);
+    this.ctx.lineTo(this.width, this.shooter.y - 20);
+    this.ctx.stroke();
+    this.ctx.restore();
 
     // Draw Aiming Guide Line
     if (this.isAiming) {
