@@ -43,126 +43,185 @@ export class ZombieHordeGame {
     this.renderer.shadowMap.enabled = true;
     this.container.appendChild(this.renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // Realistic Lighting Setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x00f0ff, 1.2);
-    dirLight.position.set(10, 30, 10);
-    this.scene.add(dirLight);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    mainLight.position.set(15, 35, 15);
+    mainLight.castShadow = true;
+    this.scene.add(mainLight);
+
+    const rimLight = new THREE.DirectionalLight(0x00f0ff, 0.8);
+    rimLight.position.set(-15, 20, -15);
+    this.scene.add(rimLight);
 
     // Grid Floor
     const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x162030);
     this.scene.add(gridHelper);
 
-    // High-Detail Humanoid Player Model
-    this.playerMesh = this.createHighDetailHumanoidPlayer();
+    // Ultra Realistic Humanoid Player Model
+    this.playerMesh = this.createUltraRealisticHumanoidPlayer();
     this.scene.add(this.playerMesh);
 
     window.addEventListener('resize', () => this.onWindowResize());
   }
 
-  createHighDetailHumanoidPlayer() {
+  createUltraRealisticHumanoidPlayer() {
     const group = new THREE.Group();
 
-    const matSkin = new THREE.MeshStandardMaterial({ color: 0xffd1b3, roughness: 0.4 });
-    const matHair = new THREE.MeshStandardMaterial({ color: 0x221100, roughness: 0.6 });
-    const matArmor = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.2, metalness: 0.8 });
-    const matPants = new THREE.MeshStandardMaterial({ color: 0x162035, roughness: 0.7 });
-    const matBoots = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.5 });
-    const matGun = new THREE.MeshStandardMaterial({ color: 0x1a1a24, metalness: 0.9, roughness: 0.1 });
+    // High Quality Materials
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0xffcca8, roughness: 0.3, metalness: 0.1 });
+    const matHair = new THREE.MeshStandardMaterial({ color: 0x1c130d, roughness: 0.8 });
+    const matArmor = new THREE.MeshStandardMaterial({ color: 0x00d0ff, roughness: 0.2, metalness: 0.7 });
+    const matVest = new THREE.MeshStandardMaterial({ color: 0x121b2d, roughness: 0.5 });
+    const matPants = new THREE.MeshStandardMaterial({ color: 0x1c2438, roughness: 0.6 });
+    const matBoots = new THREE.MeshStandardMaterial({ color: 0x0a0a0e, roughness: 0.4 });
+    const matGun = new THREE.MeshStandardMaterial({ color: 0x111116, metalness: 0.95, roughness: 0.05 });
     const matVisor = new THREE.MeshBasicMaterial({ color: 0xff0055 });
+    const matPad = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.2 });
 
-    // Head Sphere
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), matSkin);
+    // 1. Head & Facial Features
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 20, 20), matSkin);
     head.position.y = 2.15;
     group.add(head);
 
-    // Hair
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.37, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8), matHair);
-    hair.position.y = 2.18;
-    group.add(hair);
+    // Nose
+    const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.08), matSkin);
+    nose.position.set(0, 2.14, 0.32);
+    group.add(nose);
 
-    // Visor
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.18), matVisor);
-    visor.position.set(0, 2.15, 0.24);
+    // Ears
+    const earL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.08), matSkin);
+    earL.position.set(-0.33, 2.15, 0);
+    group.add(earL);
+    const earR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.08), matSkin);
+    earR.position.set(0.33, 2.15, 0);
+    group.add(earR);
+
+    // Tactical Helmet & Hair
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.75), matHair);
+    helmet.position.y = 2.18;
+    group.add(helmet);
+
+    // Sci-Fi Goggles / Visor
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.18), matVisor);
+    visor.position.set(0, 2.16, 0.24);
     group.add(visor);
 
     // Neck
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 10), matSkin);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 12), matSkin);
     neck.position.y = 1.82;
     group.add(neck);
 
-    // Chest Armor
-    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.65, 0.45), matArmor);
+    // 2. Chest & Tactical Vest
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.65, 0.45), matVest);
     chest.position.y = 1.4;
     group.add(chest);
 
-    // Waist
-    const waist = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.38), matPants);
-    waist.position.y = 0.98;
-    group.add(waist);
+    // Armor Plates
+    const armorPlate = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.48), matArmor);
+    armorPlate.position.set(0, 1.42, 0);
+    group.add(armorPlate);
 
-    // Legs
+    // Shoulder Pads
+    const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), matPad);
+    shoulderL.position.set(-0.52, 1.65, 0);
+    group.add(shoulderL);
+    const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), matPad);
+    shoulderR.position.set(0.52, 1.65, 0);
+    group.add(shoulderR);
+
+    // Waist Belt & Pouches
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.15, 0.42), matBoots);
+    belt.position.y = 1.05;
+    group.add(belt);
+
+    const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), matVest);
+    pouch.position.set(-0.25, 1.05, 0.22);
+    group.add(pouch);
+
+    // 3. Legs & Kneepads
     const legLGroup = new THREE.Group();
     legLGroup.position.set(-0.24, 0.8, 0);
-    const thighL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 10), matPants);
+    const thighL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 12), matPants);
     thighL.position.y = -0.22;
     legLGroup.add(thighL);
-    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.38), matBoots);
-    bootL.position.set(0, -0.55, 0.08);
+    const kneeL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), matPad);
+    kneeL.position.set(0, -0.45, 0.1);
+    legLGroup.add(kneeL);
+    const calfL = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.4, 12), matPants);
+    calfL.position.y = -0.55;
+    legLGroup.add(calfL);
+    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.38), matBoots);
+    bootL.position.set(0, -0.72, 0.08);
     legLGroup.add(bootL);
     group.add(legLGroup);
     this.playerLegL = legLGroup;
 
     const legRGroup = new THREE.Group();
     legRGroup.position.set(0.24, 0.8, 0);
-    const thighR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 10), matPants);
+    const thighR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 12), matPants);
     thighR.position.y = -0.22;
     legRGroup.add(thighR);
-    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.38), matBoots);
-    bootR.position.set(0, -0.55, 0.08);
+    const kneeR = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), matPad);
+    kneeR.position.set(0, -0.45, 0.1);
+    legRGroup.add(kneeR);
+    const calfR = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.4, 12), matPants);
+    calfR.position.y = -0.55;
+    legRGroup.add(calfR);
+    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.38), matBoots);
+    bootR.position.set(0, -0.72, 0.08);
     legRGroup.add(bootR);
     group.add(legRGroup);
     this.playerLegR = legRGroup;
 
-    // Arms
+    // 4. Arms & Forearms
     const armLGroup = new THREE.Group();
     armLGroup.position.set(-0.52, 1.55, 0);
-    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 10), matArmor);
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 12), matArmor);
     armL.position.y = -0.3;
     armLGroup.add(armL);
     group.add(armLGroup);
 
     const armRGroup = new THREE.Group();
     armRGroup.position.set(0.52, 1.55, 0);
-    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 10), matArmor);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 12), matArmor);
     armR.position.y = -0.3;
     armRGroup.add(armR);
     group.add(armRGroup);
 
-    // Rifle
+    // 5. Detailed Assault Rifle Gun with Scope
     const gunGroup = new THREE.Group();
     const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.95), matGun);
     gunGroup.add(gunBody);
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.55, 10), matGun);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.55, 12), matGun);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.05, 0.65);
     gunGroup.add(barrel);
+    const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.25, 10), matGun);
+    scope.rotation.x = Math.PI / 2;
+    scope.position.set(0, 0.18, 0.1);
+    gunGroup.add(scope);
+    const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.35, 0.16), matGun);
+    magazine.position.set(0, -0.22, 0.1);
+    gunGroup.add(magazine);
+
     gunGroup.position.set(0.35, 1.25, 0.45);
     group.add(gunGroup);
 
     return group;
   }
 
-  createHighDetailHumanoidZombie() {
+  createUltraRealisticHumanoidZombie() {
     const group = new THREE.Group();
-    const matSkin = new THREE.MeshStandardMaterial({ color: 0x22cc55, roughness: 0.7 });
-    const matTornCloth = new THREE.MeshStandardMaterial({ color: 0x273027, roughness: 0.9 });
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0x22c255, roughness: 0.7 });
+    const matTornCloth = new THREE.MeshStandardMaterial({ color: 0x242d24, roughness: 0.9 });
     const matRedEyes = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const matTeeth = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     // Head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), matSkin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), matSkin);
     head.position.y = 2.15;
     group.add(head);
 
@@ -174,6 +233,11 @@ export class ZombieHordeGame {
     eyeR.position.set(0.11, 2.18, 0.28);
     group.add(eyeR);
 
+    // Open Mouth & Teeth
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.15), matTeeth);
+    mouth.position.set(0, 2.02, 0.25);
+    group.add(mouth);
+
     // Torso
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.75, 0.45), matTornCloth);
     torso.position.y = 1.35;
@@ -182,22 +246,22 @@ export class ZombieHordeGame {
     // Legs
     const legLGroup = new THREE.Group();
     legLGroup.position.set(-0.24, 0.8, 0);
-    const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.75, 10), matTornCloth);
+    const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.75, 12), matTornCloth);
     legL.position.y = -0.375;
     legLGroup.add(legL);
     group.add(legLGroup);
 
     const legRGroup = new THREE.Group();
     legRGroup.position.set(0.24, 0.8, 0);
-    const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.75, 10), matTornCloth);
+    const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.75, 12), matTornCloth);
     legR.position.y = -0.375;
     legRGroup.add(legR);
     group.add(legRGroup);
 
-    // Arms
+    // Outstretched Arms
     const armLGroup = new THREE.Group();
     armLGroup.position.set(-0.5, 1.55, 0);
-    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 10), matSkin);
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 12), matSkin);
     armL.position.set(0, -0.2, 0.3);
     armL.rotation.x = -Math.PI / 2.1;
     armLGroup.add(armL);
@@ -205,7 +269,7 @@ export class ZombieHordeGame {
 
     const armRGroup = new THREE.Group();
     armRGroup.position.set(0.5, 1.55, 0);
-    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 10), matSkin);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 12), matSkin);
     armR.position.set(0, -0.2, 0.3);
     armR.rotation.x = -Math.PI / 2.1;
     armRGroup.add(armR);
@@ -257,13 +321,13 @@ export class ZombieHordeGame {
     const zx = this.player.x + Math.cos(angle) * distance;
     const zz = this.player.z + Math.sin(angle) * distance;
 
-    const zombieMesh = this.createHighDetailHumanoidZombie();
+    const zombieMesh = this.createUltraRealisticHumanoidZombie();
     zombieMesh.position.set(zx, 0, zz);
     this.scene.add(zombieMesh);
 
     this.zombies.push({
       mesh: zombieMesh,
-      hp: 1, // 1-HIT KILL INSTANT SATISFACTION!
+      hp: 1,
       speed: 0.04
     });
   }
@@ -306,7 +370,7 @@ export class ZombieHordeGame {
       this.fireBulletAtNearest();
     }
 
-    // UPDATE BULLETS WITH CONTINUOUS LINE-SEGMENT COLLISION (100% IMPOSSIBLE TO MISS BUG FIX!)
+    // UPDATE BULLETS WITH CONTINUOUS LINE-SEGMENT COLLISION
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
 
@@ -326,17 +390,15 @@ export class ZombieHordeGame {
       const newX = b.mesh.position.x;
       const newZ = b.mesh.position.z;
 
-      // Check collision against all zombies using point-to-line-segment distance!
       for (let j = this.zombies.length - 1; j >= 0; j--) {
         const zm = this.zombies[j];
         const zx = zm.mesh.position.x;
         const zz = zm.mesh.position.z;
 
-        // Calculate minimum distance between Zombie center (zx, zz) and Bullet path line segment (oldX, oldZ) -> (newX, newZ)
         const distToSegment = this.pointToSegmentDistance(zx, zz, oldX, oldZ, newX, newZ);
 
-        if (distToSegment < 1.8) { // Generous 1.8 unit hit zone!
-          zm.hp = 0; // INSTANT DEAD!
+        if (distToSegment < 1.8) {
+          zm.hp = 0;
           soundEngine.playZombieHit();
           this.spawnHitParticle(b.mesh.position);
 
@@ -400,7 +462,6 @@ export class ZombieHordeGame {
     }
   }
 
-  // Math Helper: Distance from Point (px, pz) to Line Segment (x1, z1) -> (x2, z2)
   pointToSegmentDistance(px, pz, x1, z1, x2, z2) {
     const l2 = (x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1);
     if (l2 === 0) return Math.hypot(px - x1, pz - z1);
