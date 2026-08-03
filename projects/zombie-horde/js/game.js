@@ -3,7 +3,7 @@ import { soundEngine } from './audio.js';
 export class ZombieHordeGame {
   constructor(container) {
     this.container = container;
-    this.state = 'START'; // START, PLAYING, GAMEOVER
+    this.state = 'START';
     
     this.kills = 0;
     this.wave = 1;
@@ -17,7 +17,7 @@ export class ZombieHordeGame {
       vz: 0,
       speed: 0.18,
       weapon: 'MACHINE GUN',
-      fireRate: 8, // frames per shot
+      fireRate: 8,
       fireTimer: 0
     };
 
@@ -43,25 +43,118 @@ export class ZombieHordeGame {
     this.container.appendChild(this.renderer.domElement);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x00f0ff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0x00f0ff, 0.9);
     dirLight.position.set(10, 30, 10);
     this.scene.add(dirLight);
 
-    // 3D Grid Floor
+    // Grid Floor
     const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x162030);
     this.scene.add(gridHelper);
 
-    // Player Mesh
-    const playerGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.6, 8);
-    const playerMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.3, metalness: 0.8 });
-    this.playerMesh = new THREE.Mesh(playerGeo, playerMat);
-    this.playerMesh.position.y = 0.8;
+    // Build Humanoid Player Model Group
+    this.playerMesh = this.createHumanoidPlayer();
     this.scene.add(this.playerMesh);
 
     window.addEventListener('resize', () => this.onWindowResize());
+  }
+
+  createHumanoidPlayer() {
+    const group = new THREE.Group();
+    const matArmor = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.3, metalness: 0.8 });
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0xffd1a4 });
+    const matDark = new THREE.MeshStandardMaterial({ color: 0x111122 });
+    const matGun = new THREE.MeshStandardMaterial({ color: 0x222233, metalness: 0.9 });
+
+    // Torso (Body)
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.5), matArmor);
+    torso.position.y = 1.1;
+    group.add(torso);
+
+    // Head + Visor
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), matSkin);
+    head.position.y = 1.95;
+    group.add(head);
+
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.15, 0.2), new THREE.MeshBasicMaterial({ color: 0xff0055 }));
+    visor.position.set(0, 1.98, 0.2);
+    group.add(visor);
+
+    // Left & Right Legs
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.7, 0.3), matDark);
+    legL.position.set(-0.25, 0.35, 0);
+    group.add(legL);
+
+    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.7, 0.3), matDark);
+    legR.position.set(0.25, 0.35, 0);
+    group.add(legR);
+
+    // Arms & Gun
+    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), matArmor);
+    armL.position.set(-0.55, 1.1, 0.2);
+    armL.rotation.x = -Math.PI / 4;
+    group.add(armL);
+
+    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), matArmor);
+    armR.position.set(0.55, 1.1, 0.2);
+    armR.rotation.x = -Math.PI / 4;
+    group.add(armR);
+
+    // Rifle Weapon in Hands
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), matGun);
+    gun.position.set(0.3, 1.0, 0.5);
+    group.add(gun);
+
+    return group;
+  }
+
+  createHumanoidZombie() {
+    const group = new THREE.Group();
+    const matZombieSkin = new THREE.MeshStandardMaterial({ color: 0x00ff66, roughness: 0.6 });
+    const matCloth = new THREE.MeshStandardMaterial({ color: 0x334433, roughness: 0.8 });
+
+    // Torso
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.5), matCloth);
+    torso.position.y = 1.1;
+    group.add(torso);
+
+    // Head
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), matZombieSkin);
+    head.position.y = 1.95;
+    group.add(head);
+
+    // Red Glowing Eyes
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    eyeL.position.set(-0.15, 2.0, 0.25);
+    group.add(eyeL);
+
+    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    eyeR.position.set(0.15, 2.0, 0.25);
+    group.add(eyeR);
+
+    // Legs
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.7, 0.3), matCloth);
+    legL.position.set(-0.25, 0.35, 0);
+    group.add(legL);
+
+    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.7, 0.3), matCloth);
+    legR.position.set(0.25, 0.35, 0);
+    group.add(legR);
+
+    // Outstretched Zombie Arms (Classic Zombie Walk Pose!)
+    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), matZombieSkin);
+    armL.position.set(-0.55, 1.2, 0.35);
+    armL.rotation.x = -Math.PI / 2;
+    group.add(armL);
+
+    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), matZombieSkin);
+    armR.position.set(0.55, 1.2, 0.35);
+    armR.rotation.x = -Math.PI / 2;
+    group.add(armR);
+
+    return group;
   }
 
   onWindowResize() {
@@ -76,9 +169,8 @@ export class ZombieHordeGame {
     this.player.hp = 100;
     this.player.x = 0;
     this.player.z = 0;
-    this.playerMesh.position.set(0, 0.8, 0);
+    this.playerMesh.position.set(0, 0, 0);
     
-    // Clear 3D objects
     this.zombies.forEach(z => this.scene.remove(z.mesh));
     this.bullets.forEach(b => this.scene.remove(b.mesh));
     this.particles.forEach(p => this.scene.remove(p.mesh));
@@ -103,10 +195,8 @@ export class ZombieHordeGame {
     const zx = this.player.x + Math.cos(angle) * distance;
     const zz = this.player.z + Math.sin(angle) * distance;
 
-    const zombieGeo = new THREE.BoxGeometry(0.8, 1.5, 0.8);
-    const zombieMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, roughness: 0.5 });
-    const zombieMesh = new THREE.Mesh(zombieGeo, zombieMat);
-    zombieMesh.position.set(zx, 0.75, zz);
+    const zombieMesh = this.createHumanoidZombie();
+    zombieMesh.position.set(zx, 0, zz);
     this.scene.add(zombieMesh);
 
     this.zombies.push({
@@ -125,18 +215,15 @@ export class ZombieHordeGame {
   update() {
     if (this.state !== 'PLAYING') return;
 
-    // Update Player Position
     this.player.x += this.player.vx;
     this.player.z += this.player.vz;
     this.playerMesh.position.x = this.player.x;
     this.playerMesh.position.z = this.player.z;
 
-    // Smooth Top-down Camera Follow
     this.camera.position.x = this.player.x;
     this.camera.position.z = this.player.z + 18;
     this.camera.lookAt(this.player.x, 0, this.player.z);
 
-    // Auto-Fire Guns at Nearest Zombie
     this.player.fireTimer++;
     if (this.player.fireTimer >= this.player.fireRate && this.zombies.length > 0) {
       this.player.fireTimer = 0;
@@ -156,24 +243,20 @@ export class ZombieHordeGame {
         continue;
       }
 
-      // Check Bullet Collision with Zombies
       for (let j = this.zombies.length - 1; j >= 0; j--) {
         const zm = this.zombies[j];
         const dist = b.mesh.position.distanceTo(zm.mesh.position);
-        if (dist < 1.0) {
+        if (dist < 1.1) {
           zm.hp -= 15;
           soundEngine.playZombieHit();
           this.spawnHitParticle(b.mesh.position);
 
-          // Knockback
           zm.mesh.position.x += b.vx * 0.3;
           zm.mesh.position.z += b.vz * 0.3;
 
-          // Remove Bullet
           this.scene.remove(b.mesh);
           this.bullets.splice(i, 1);
 
-          // Zombie Defeated!
           if (zm.hp <= 0) {
             soundEngine.playZombieDeath();
             this.spawnDeathParticles(zm.mesh.position);
@@ -181,7 +264,6 @@ export class ZombieHordeGame {
             this.zombies.splice(j, 1);
             this.kills++;
 
-            // Wave Clear & Spawn Horde
             if (this.zombies.length === 0) {
               this.wave++;
               this.spawnHordeWave();
@@ -205,7 +287,6 @@ export class ZombieHordeGame {
         zm.mesh.rotation.y = Math.atan2(dx, dz);
       }
 
-      // Zombie Attack Player Collision
       if (dist < 1.2) {
         this.player.hp -= 0.5;
         soundEngine.playPlayerDamage();
@@ -256,7 +337,7 @@ export class ZombieHordeGame {
     const bulletGeo = new THREE.SphereGeometry(0.2, 8, 8);
     const bulletMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
     const bulletMesh = new THREE.Mesh(bulletGeo, bulletMat);
-    bulletMesh.position.set(this.player.x, 1.0, this.player.z);
+    bulletMesh.position.set(this.player.x, 1.2, this.player.z);
     this.scene.add(bulletMesh);
 
     const speed = 0.8;
