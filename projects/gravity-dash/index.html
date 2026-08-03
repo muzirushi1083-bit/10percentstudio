@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Gravity Shift Dash - 10%studio Game 2</title>
   <meta name="description" content="重力を操り、世界ランキング1位を目指せ！10%studioの第2弾ハイスピードランナー">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app">
+    <!-- Top Fixed Rival Banner (Outside Game Canvas) -->
+    <div id="rival-banner" class="rival-banner hidden">
+      <span id="rival-text">あと 50m で 5位 [DASH_HERO] を追い抜く！</span>
+    </div>
+
     <!-- UI Header -->
     <header class="ui-header">
       <div class="brand">10%studio Game 2</div>
@@ -24,11 +29,6 @@
         <div id="high-score-display">0m</div>
       </div>
     </header>
-
-    <!-- In-Game Rival Overtake Banner -->
-    <div id="rival-banner" class="rival-banner hidden">
-      <span id="rival-text">あと 50m で 5位 [DASH_HERO] を追い抜く！</span>
-    </div>
 
     <!-- Start Overlay -->
     <div id="start-screen" class="overlay active">

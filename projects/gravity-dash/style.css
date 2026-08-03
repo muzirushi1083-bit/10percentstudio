@@ -45,12 +45,44 @@ html, body {
   z-index: 1;
 }
 
+/* Top Safe Area Rival Banner (Outside Wall Canvas) */
+.rival-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 170, 0, 0.95);
+  border: 1px solid #ffaa00;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  z-index: 25;
+  box-shadow: 0 0 15px rgba(255, 170, 0, 0.8);
+  pointer-events: none;
+  animation: pulseRival 1.2s infinite alternate;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+.rival-banner.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@keyframes pulseRival {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.05); }
+}
+
 .ui-header {
   position: absolute;
-  top: 20px;
+  top: 44px;
   left: 0;
   width: 100%;
-  padding: 0 24px;
+  padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -60,7 +92,7 @@ html, body {
 
 .brand {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 2px;
   color: var(--primary-neon);
 }
@@ -79,40 +111,9 @@ html, body {
 
 #score-display, #high-score-display {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--secondary-neon);
-}
-
-/* In-Game Rival Banner */
-.rival-banner {
-  position: absolute;
-  top: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 170, 0, 0.9);
-  border: 1px solid #ffaa00;
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-  color: #000000;
-  z-index: 15;
-  box-shadow: 0 0 15px rgba(255, 170, 0, 0.6);
-  pointer-events: none;
-  animation: pulseRival 1.2s infinite alternate;
-  transition: opacity 0.3s ease;
-}
-
-.rival-banner.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-@keyframes pulseRival {
-  from { transform: translateX(-50%) scale(1); }
-  to { transform: translateX(-50%) scale(1.05); }
 }
 
 .overlay {
@@ -125,7 +126,7 @@ html, body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 20;
+  z-index: 30;
   background: rgba(7, 8, 14, 0.88);
   backdrop-filter: blur(12px);
   padding: 20px;
@@ -144,7 +145,6 @@ html, body {
   pointer-events: auto;
 }
 
-/* Player Name Input */
 .player-input-box {
   display: flex;
   flex-direction: column;
@@ -175,17 +175,15 @@ html, body {
   letter-spacing: 2px;
 }
 
-/* Menu Button Group Container */
 .menu-button-group {
   display: flex;
   flex-direction: column;
-  gap: 20px !important;
+  gap: 18px !important;
   width: 100%;
   max-width: 280px;
   margin-top: 10px;
 }
 
-/* Leaderboard List */
 .leaderboard-box {
   background: var(--panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.15);
