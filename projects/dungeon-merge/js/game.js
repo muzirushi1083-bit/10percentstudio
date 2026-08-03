@@ -65,7 +65,13 @@ export class DungeonMergeGame {
       return;
     }
 
-    const types = ['sword', 'sword', 'shield', 'potion', 'monster'];
+    // High chance of monsters if none on board to ensure action!
+    const hasMonster = this.board.some(t => t && (t.type === 'monster' || t.type === 'boss'));
+    let types = ['sword', 'shield', 'potion', 'monster', 'monster'];
+    if (!hasMonster) {
+      types = ['monster', 'monster', 'monster', 'sword', 'potion'];
+    }
+
     const type = types[Math.floor(Math.random() * types.length)];
     
     if (type === 'monster') {
@@ -90,7 +96,7 @@ export class DungeonMergeGame {
 
     const clickedTile = this.board[index];
 
-    // Case 1: No cell selected -> SELECT or CONSUME
+    // Case 1: No cell currently selected
     if (this.selectedCell === null) {
       if (clickedTile) {
         if (clickedTile.type === 'potion') {
@@ -110,8 +116,17 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Case 2: Clicked same cell -> Deselect
+    // Case 2: Clicked same cell -> Discard / Swing Sword (Ensures no deadlock!)
     if (this.selectedCell === index) {
+      const tile = this.board[index];
+      // Swing sword into thin air (consumes turn & spawns new tiles!)
+      if (tile && tile.type === 'sword') {
+        soundEngine.playAttack();
+        // 50% chance to consume sword on swing or keep it
+        this.selectedCell = null;
+        this.endTurn();
+        return;
+      }
       this.selectedCell = null;
       this.renderBoard();
       if (this.onUIUpdate) this.onUIUpdate();
@@ -120,16 +135,17 @@ export class DungeonMergeGame {
 
     const sourceTile = this.board[this.selectedCell];
 
-    // Case 3: Move to empty cell
+    // Case 3: Move to ANY empty cell -> Advances Turn & Spawns New Tiles!
     if (!clickedTile) {
       this.board[index] = sourceTile;
       this.board[this.selectedCell] = null;
       this.selectedCell = null;
+      soundEngine.playMerge();
       this.endTurn();
       return;
     }
 
-    // Case 4: Merge same type & level (Swords)
+    // Case 4: Merge same type & level
     if (sourceTile.type === clickedTile.type && sourceTile.level === clickedTile.level && sourceTile.type !== 'monster' && sourceTile.type !== 'boss') {
       clickedTile.level += 1;
       this.board[this.selectedCell] = null;
@@ -164,7 +180,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Default: Change selection to clicked tile
+    // Default: Change selection to newly clicked tile
     this.selectedCell = index;
     this.renderBoard();
     if (this.onUIUpdate) this.onUIUpdate();
@@ -211,7 +227,11 @@ export class DungeonMergeGame {
       this.player.hp = 0;
       this.state = 'GAMEOVER';
     } else {
+      // Spawn 1 or 2 new tiles each turn to keep the board dynamic
       this.spawnRandomTile();
+      if (this.board.filter(t => t !== null).length < 6) {
+        this.spawnRandomTile();
+      }
     }
 
     this.renderBoard();
@@ -249,7 +269,6 @@ export class DungeonMergeGame {
         `;
       }
 
-      // STRICT SINGLE CLICK LISTENER
       cell.onclick = (e) => {
         e.stopPropagation();
         this.handleCellClick(index);
