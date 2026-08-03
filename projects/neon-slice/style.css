@@ -1,0 +1,420 @@
+:root {
+  --bg-color: #0a0b10;
+  --panel-bg: rgba(18, 20, 32, 0.85);
+  --primary-neon: #00f0ff;
+  --secondary-neon: #ff0077;
+  --accent-neon: #ffe600;
+  --reward-neon: #00ff66;
+  --text-main: #ffffff;
+  --text-sub: #8a99ad;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Noto Sans JP', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  font-family: var(--font-body);
+  color: var(--text-main);
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Web Ad Banner Container */
+.web-ad-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 12;
+}
+
+.ad-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 2px;
+}
+
+/* UI Header */
+.ui-header {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  width: 100%;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--primary-neon);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.score-container, .high-score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.score-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+}
+
+#score-display, #high-score-display {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+#score-display {
+  color: var(--accent-neon);
+  text-shadow: 0 0 12px rgba(255, 230, 0, 0.6);
+}
+
+/* In-Game Rival Overtake Banner */
+.rival-banner {
+  position: absolute;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 0, 119, 0.85);
+  border: 1px solid #ff0077;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  z-index: 15;
+  box-shadow: 0 0 15px rgba(255, 0, 119, 0.6);
+  pointer-events: none;
+  animation: pulseRival 1.2s infinite alternate;
+  transition: opacity 0.3s ease;
+}
+
+.rival-banner.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@keyframes pulseRival {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.05); }
+}
+
+/* Overlays */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  background: rgba(10, 11, 16, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 20px;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Player Name Input */
+.player-input-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.player-input-box label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-sub);
+  letter-spacing: 1.5px;
+}
+
+#player-name-input {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--primary-neon);
+  padding: 8px 16px;
+  border-radius: 8px;
+  outline: none;
+  width: 180px;
+  letter-spacing: 2px;
+}
+
+#player-name-input:focus {
+  border-color: var(--primary-neon);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+/* Rewarded Ad Modal */
+.ad-modal-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--reward-neon);
+  border-radius: 16px;
+  padding: 28px 36px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0, 255, 102, 0.3);
+}
+
+.ad-modal-box h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--reward-neon);
+  margin-bottom: 12px;
+}
+
+.ad-timer-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-sub);
+  margin-bottom: 20px;
+}
+
+.ad-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#ad-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--reward-neon);
+  transition: width 0.1s linear;
+}
+
+/* Leaderboard List */
+.leaderboard-box {
+  background: var(--panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 16px 24px;
+  width: 100%;
+  max-width: 320px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+.rank-badge {
+  font-weight: 900;
+  width: 32px;
+}
+
+.rank-badge.top-1 { color: #ffe600; text-shadow: 0 0 8px #ffe600; }
+.rank-badge.top-2 { color: #e0e0e0; }
+.rank-badge.top-3 { color: #cd7f32; }
+
+.player-name-col {
+  flex-grow: 1;
+  text-align: left;
+  padding-left: 10px;
+  color: var(--text-main);
+}
+
+.player-score-col {
+  font-weight: 700;
+  color: var(--primary-neon);
+}
+
+.rank-highlight {
+  color: var(--accent-neon) !important;
+  font-size: 24px;
+  font-weight: 900;
+  text-shadow: 0 0 12px rgba(255, 230, 0, 0.6);
+}
+
+/* Titles */
+.game-title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.1;
+  letter-spacing: 4px;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+  margin-bottom: 6px;
+}
+
+.game-title .highlight {
+  color: var(--secondary-neon);
+  text-shadow: 0 0 20px rgba(255, 0, 119, 0.8);
+}
+
+.subtitle {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-sub);
+  margin-bottom: 24px;
+}
+
+.overlay-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--secondary-neon);
+  text-shadow: 0 0 15px rgba(255, 0, 119, 0.7);
+  margin-bottom: 18px;
+  letter-spacing: 2px;
+}
+
+.result-box {
+  background: var(--panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px 28px;
+  min-width: 260px;
+  margin-bottom: 20px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text-sub);
+  margin: 8px 0;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-neon), #00a8ff);
+  color: #000;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+}
+
+.btn-reward {
+  background: linear-gradient(135deg, var(--reward-neon), #00cc55);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+}
+
+.btn-reward:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.7);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

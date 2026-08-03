@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10%studio - Cyber Hypercasual Games Portal</title>
+  <meta name="description" content="AI自律型ゲームスタジオ 10%studio の公式ゲームポータル。1秒で病みつきになるハイパーカジュアルゲーム集">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #07080e;
+      --panel-bg: rgba(18, 20, 32, 0.85);
+      --primary-neon: #00f0ff;
+      --secondary-neon: #ff0077;
+      --accent-neon: #ffaa00;
+      --text-main: #ffffff;
+      --text-sub: #8a99ad;
+      --font-display: 'Orbitron', sans-serif;
+      --font-body: 'Noto Sans JP', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+      margin-bottom: 8px;
+    }
+
+    .brand-title span {
+      color: var(--secondary-neon);
+      text-shadow: 0 0 20px rgba(255, 0, 119, 0.8);
+    }
+
+    .tagline {
+      font-family: var(--font-display);
+      font-size: 13px;
+      color: var(--text-sub);
+      letter-spacing: 2px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .game-card {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary-neon);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-family: var(--font-display);
+      font-size: 10px;
+      color: var(--accent-neon);
+    }
+
+    .game-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .game-desc {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .btn-play {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-neon), #00a8ff);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-play:hover {
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8);
+    }
+
+    footer {
+      margin-top: auto;
+      padding-top: 40px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--text-sub);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="brand-title">10%<span>STUDIO</span></h1>
+    <p class="tagline">CYBER HYPERCASUAL GAMES PORTAL</p>
+  </header>
+
+  <main class="games-grid">
+    <!-- Game 1 -->
+    <div class="game-card">
+      <span class="card-badge">PROD V2.0</span>
+      <div>
+        <h2 class="game-title">Neon Slice 2.0</h2>
+        <p class="game-desc">ネオンブロックをタイミングよく切り落とせ！連続PERFECTでのフィーバー覚醒、爆弾トラップ、世界ランキングを搭載したハイスピードスタックアクション。</p>
+      </div>
+      <a href="projects/neon-slice/index.html" class="btn-play">PLAY GAME 1</a>
+    </div>
+
+    <!-- Game 2 -->
+    <div class="game-card">
+      <span class="card-badge">PROD V2.0</span>
+      <div>
+        <h2 class="game-title">Gravity Shift Dash</h2>
+        <p class="game-desc">重力を操り壁から壁へダッシュ！空中エアブースト引き返し機能と世界ランキングを搭載したハイスピード障害物回避アクション。</p>
+      </div>
+      <a href="projects/gravity-dash/index.html" class="btn-play" style="background: linear-gradient(135deg, #ffaa00, #ff5500);">PLAY GAME 2</a>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 10%studio. All Rights Reserved. Powered by AI Agent Network.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# OS / System
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+
+# Antigravity system logs
+.system_generated/
+*.log
