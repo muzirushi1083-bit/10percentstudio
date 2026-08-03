@@ -13,6 +13,7 @@
       --primary-neon: #00f0ff;
       --secondary-neon: #ff0077;
       --accent-neon: #ffe600;
+      --zombie-neon: #00ff66;
       --text-main: #ffffff;
       --text-sub: #8a99ad;
       --font-display: 'Orbitron', sans-serif;
@@ -68,7 +69,7 @@
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 30px;
       width: 100%;
-      max-width: 1000px;
+      max-width: 1100px;
     }
 
     .game-card {
@@ -102,6 +103,11 @@
       background: rgba(255, 255, 255, 0.1);
       color: var(--accent-neon);
       border: 1px solid rgba(255, 230, 0, 0.3);
+    }
+
+    .badge-new {
+      color: var(--zombie-neon);
+      border-color: rgba(0, 255, 102, 0.4);
     }
 
     .game-title {
@@ -149,6 +155,12 @@
       box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
     }
 
+    .btn-game4 {
+      background: linear-gradient(135deg, var(--zombie-neon), #00aa55);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+    }
+
     footer {
       font-family: var(--font-display);
       font-size: 10px;
@@ -192,7 +204,7 @@
 
     <!-- Game 3 Card -->
     <div class="game-card">
-      <span class="badge">NEW REMAKE</span>
+      <span class="badge">REMAKE</span>
       <div>
         <h2 class="game-title">Chrono Bounce</h2>
         <p class="game-desc">
@@ -200,6 +212,18 @@
         </p>
       </div>
       <a href="projects/dungeon-merge/index.html" class="play-btn btn-game3">PLAY GAME 3</a>
+    </div>
+
+    <!-- Game 4 Card -->
+    <div class="game-card">
+      <span class="badge badge-new">3D ACTION</span>
+      <div>
+        <h2 class="game-title">Zombie Horde 3D</h2>
+        <p class="game-desc">
+          360度から怒涛の勢いで大群（ホード）押し寄せる大量ゾンビをマシンガンフルオートでなぎ倒す、3D超爽快サバイバルアクション！
+        </p>
+      </div>
+      <a href="projects/zombie-horde/index.html" class="play-btn btn-game4">PLAY GAME 4</a>
     </div>
   </main>
 

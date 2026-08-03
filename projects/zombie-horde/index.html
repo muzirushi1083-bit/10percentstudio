@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Zombie Horde 3D - 10%studio Game 4</title>
+  <meta name="description" content="怒涛の大群ゾンビをブッ飛ばせ！10%studioがお届けする超爽快3D大量ゾンビサバイバルアクション">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Three.js CDN for Lightweight 3D Graphics -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- UI Header -->
+    <header class="ui-header">
+      <div class="brand">10%studio Game 4</div>
+      <div class="score-container">
+        <div class="score-label">KILLS</div>
+        <div id="score-display">0</div>
+      </div>
+      <div class="high-score-container">
+        <div class="score-label">WAVE</div>
+        <div id="high-score-display">WAVE 1</div>
+      </div>
+    </header>
+
+    <!-- Player Status Bar -->
+    <div class="status-bar">
+      <div class="stat-box hp-box">
+        <span class="stat-icon">❤️</span>
+        <div class="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+        <span id="hp-text">100/100</span>
+      </div>
+      <div class="stat-box weapon-box">
+        <span class="stat-icon">🔫</span>
+        <span id="weapon-text">MACHINE GUN</span>
+      </div>
+    </div>
+
+    <!-- Start Overlay -->
+    <div id="start-screen" class="overlay active">
+      <h1 class="game-title">ZOMBIE<br><span class="highlight">HORDE 3D</span></h1>
+      <p class="subtitle">MASSIVE ZOMBIE SURVIVAL</p>
+
+      <div class="player-input-box">
+        <label for="player-name-input">SURVIVOR NAME</label>
+        <input type="text" id="player-name-input" maxlength="10" placeholder="NAME" value="SURVIVOR">
+      </div>
+
+      <div class="menu-button-group">
+        <button id="start-btn" class="btn btn-primary">START SURVIVAL</button>
+        <a href="../../index.html" class="btn btn-secondary btn-portal">🏠 MAIN PORTAL</a>
+      </div>
+      <p class="instruction">スワイプ/ドラッグで3D移動！大群ゾンビをフルオート掃射！</p>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameover-screen" class="overlay hidden">
+      <h2 class="overlay-title">SURVIVAL FAILED</h2>
+      <div class="result-box">
+        <div class="result-item">
+          <span>ZOMBIES SLAIN</span>
+          <span id="final-score">0</span>
+        </div>
+        <div class="result-item">
+          <span>WAVE SURVIVED</span>
+          <span id="final-wave">WAVE 1</span>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button id="restart-btn" class="btn btn-primary">RETRY SURVIVAL</button>
+        <a href="../../index.html" class="btn btn-secondary btn-portal">🏠 MAIN PORTAL</a>
+      </div>
+    </div>
+
+    <!-- Virtual Joystick Touch Area for Mobile/PC -->
+    <div id="joystick-zone" class="joystick-zone">
+      <div id="joystick-base" class="joystick-base">
+        <div id="joystick-thumb" class="joystick-thumb"></div>
+      </div>
+    </div>
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
