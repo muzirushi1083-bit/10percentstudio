@@ -1,344 +1,342 @@
 import { soundEngine } from './audio.js';
 
-export class DungeonMergeGame {
-  constructor(gridElement, onUIUpdate) {
-    this.gridElement = gridElement;
-    this.onUIUpdate = onUIUpdate;
-    this.GRID_SIZE = 4;
+export class ChronoBounceGame {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
     
-    this.state = 'START';
-    this.floor = 1;
-    this.gold = 0;
-    this.kills = 0;
-    this.shufflesLeft = 3;
+    this.state = 'START'; // START, AIMING, FIRING, GAMEOVER
+    this.stage = 1;
+    this.highScore = localStorage.getItem('chrono_bounce_best') || 1;
     
-    this.player = {
-      hp: 100,
-      maxHp: 100,
-      shield: 0,
-      baseAttack: 8
-    };
+    this.balls = [];
+    this.blocks = [];
+    this.particles = [];
+    
+    // Shooter Configuration
+    this.shooter = { x: 0, y: 0 };
+    this.aimAngle = -Math.PI / 2;
+    this.isAiming = false;
+    this.ballCount = 30;
+    this.ballsToFire = 0;
+    this.fireTimer = 0;
+    
+    // Time Distortion (Slow-mo)
+    this.timeScale = 1.0;
+    this.targetTimeScale = 1.0;
+    
+    // Screen Shake Effect
+    this.shake = 0;
+    this.comboCount = 0;
 
-    this.board = [];
-    this.selectedCell = null;
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this.shooter.x = this.width / 2;
+    this.shooter.y = this.height - 80;
   }
 
   start() {
-    this.floor = 1;
-    this.gold = 0;
-    this.kills = 0;
-    this.shufflesLeft = 3;
-    this.player.hp = 100;
-    this.player.maxHp = 100;
-    this.player.shield = 0;
-    this.selectedCell = null;
-    
-    this.initBoard();
-    this.state = 'PLAYING';
-    this.renderBoard();
-    if (this.onUIUpdate) this.onUIUpdate();
+    this.stage = 1;
+    this.ballCount = 30;
+    this.balls = [];
+    this.particles = [];
+    this.isAiming = false;
+    this.state = 'AIMING';
+    this.generateStageBlocks();
   }
 
-  initBoard() {
-    this.board = Array(this.GRID_SIZE * this.GRID_SIZE).fill(null);
-    for (let i = 0; i < 8; i++) {
-      this.spawnRandomTile();
-    }
-  }
+  generateStageBlocks() {
+    this.blocks = [];
+    const cols = 6;
+    const rows = 4 + Math.min(Math.floor(this.stage / 2), 4);
+    const blockWidth = (this.width - 60) / cols;
+    const blockHeight = 36;
+    const startY = 100;
 
-  spawnRandomTile() {
-    const emptyIndices = [];
-    this.board.forEach((tile, index) => {
-      if (!tile) emptyIndices.push(index);
-    });
-
-    if (emptyIndices.length === 0) return;
-
-    const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-    
-    if (this.floor % 5 === 0 && !this.board.some(t => t && t.type === 'boss')) {
-      this.board[randomIndex] = {
-        type: 'boss',
-        level: Math.floor(this.floor / 5) || 1,
-        hp: 40 + this.floor * 15,
-        maxHp: 40 + this.floor * 15,
-        atk: 15 + this.floor * 3
-      };
-      return;
-    }
-
-    // Dynamic tile balance
-    const monsterCount = this.board.filter(t => t && (t.type === 'monster' || t.type === 'boss')).length;
-    let types = ['sword', 'sword', 'shield', 'potion', 'monster'];
-    
-    if (monsterCount >= 6) {
-      // If board is getting flooded with monsters, guarantee weapon/heal drops!
-      types = ['sword', 'sword', 'potion', 'shield'];
-    } else if (monsterCount === 0) {
-      types = ['monster', 'monster', 'sword', 'potion'];
-    }
-
-    const type = types[Math.floor(Math.random() * types.length)];
-    
-    if (type === 'monster') {
-      this.board[randomIndex] = {
-        type: 'monster',
-        level: 1,
-        hp: 10 + this.floor * 5,
-        maxHp: 10 + this.floor * 5,
-        atk: 5 + this.floor * 2
-      };
-    } else {
-      this.board[randomIndex] = {
-        type: type,
-        level: 1
-      };
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        // 65% spawn chance
+        if (Math.random() < 0.65) {
+          const hp = this.stage * 3 + Math.floor(Math.random() * 5);
+          this.blocks.push({
+            x: 30 + c * blockWidth,
+            y: startY + r * (blockHeight + 8),
+            w: blockWidth - 6,
+            h: blockHeight,
+            hp: hp,
+            maxHp: hp,
+            hue: (r * 40 + c * 20 + this.stage * 15) % 360
+          });
+        }
+      }
     }
   }
 
-  handleCellClick(index) {
-    if (this.state !== 'PLAYING') return;
+  handlePointerDown(x, y) {
+    if (this.state !== 'AIMING' || this.balls.length > 0) return;
     soundEngine.init();
-
-    const clickedTile = this.board[index];
-
-    // Case 1: No cell selected -> CONSUME, DIRECT PUNCH, or SELECT
-    if (this.selectedCell === null) {
-      if (clickedTile) {
-        if (clickedTile.type === 'potion') {
-          this.usePotion(index);
-          this.endTurn();
-          return;
-        } else if (clickedTile.type === 'shield') {
-          this.useShield(index);
-          this.endTurn();
-          return;
-        } else if (clickedTile.type === 'monster' || clickedTile.type === 'boss') {
-          // FEAT: Direct Bare-Hand Punch (Ensures player can ALWAYS attack even without swords!)
-          this.bareHandPunch(index);
-          this.endTurn();
-          return;
-        }
-        // Select sword for action
-        this.selectedCell = index;
-        this.renderBoard();
-        if (this.onUIUpdate) this.onUIUpdate();
-      }
-      return;
-    }
-
-    // Case 2: Clicked same cell -> Deselect / Swing Sword into thin air
-    if (this.selectedCell === index) {
-      const tile = this.board[index];
-      if (tile && tile.type === 'sword') {
-        soundEngine.playAttack();
-        this.selectedCell = null;
-        this.endTurn();
-        return;
-      }
-      this.selectedCell = null;
-      this.renderBoard();
-      if (this.onUIUpdate) this.onUIUpdate();
-      return;
-    }
-
-    const sourceTile = this.board[this.selectedCell];
-
-    // Case 3: Move to empty cell
-    if (!clickedTile) {
-      this.board[index] = sourceTile;
-      this.board[this.selectedCell] = null;
-      this.selectedCell = null;
-      soundEngine.playMerge();
-      this.endTurn();
-      return;
-    }
-
-    // Case 4: Merge same type & level (Swords OR Monsters)
-    if (sourceTile.type === clickedTile.type && sourceTile.level === clickedTile.level) {
-      if (sourceTile.type === 'monster') {
-        // Merge monsters into 1 stronger monster (Frees up board space!)
-        clickedTile.level += 1;
-        clickedTile.hp += 10;
-        clickedTile.maxHp += 10;
-        this.board[this.selectedCell] = null;
-        this.selectedCell = null;
-        soundEngine.playMerge();
-        this.endTurn();
-        return;
-      } else if (sourceTile.type === 'sword') {
-        clickedTile.level += 1;
-        this.board[this.selectedCell] = null;
-        this.selectedCell = null;
-        soundEngine.playMerge();
-        this.endTurn();
-        return;
-      }
-    }
-
-    // Case 5: Attack Monster / Boss with Sword
-    if (sourceTile.type === 'sword' && (clickedTile.type === 'monster' || clickedTile.type === 'boss')) {
-      const damage = this.player.baseAttack + (sourceTile.level * 14);
-      clickedTile.hp -= damage;
-      soundEngine.playAttack();
-
-      if (clickedTile.hp <= 0) {
-        soundEngine.playMerge();
-        this.kills++;
-        this.gold += clickedTile.type === 'boss' ? 50 : 10;
-        this.board[index] = null;
-        this.board[this.selectedCell] = null;
-        
-        if (clickedTile.type === 'boss' || this.kills % 4 === 0) {
-          this.floor++;
-        }
-      } else {
-        this.board[this.selectedCell] = null;
-      }
-
-      this.selectedCell = null;
-      this.endTurn();
-      return;
-    }
-
-    // Default: Change selection
-    this.selectedCell = index;
-    this.renderBoard();
-    if (this.onUIUpdate) this.onUIUpdate();
+    soundEngine.playSlowMo();
+    this.isAiming = true;
+    this.targetTimeScale = 0.15; // SLOW-MOTION BIND
+    this.updateAim(x, y);
   }
 
-  bareHandPunch(index) {
-    const clickedTile = this.board[index];
-    if (!clickedTile) return;
-
-    // Bare-hand damage
-    const damage = this.player.baseAttack;
-    clickedTile.hp -= damage;
-    soundEngine.playAttack();
-
-    if (clickedTile.hp <= 0) {
-      soundEngine.playMerge();
-      this.kills++;
-      this.gold += clickedTile.type === 'boss' ? 50 : 10;
-      this.board[index] = null;
-      
-      if (clickedTile.type === 'boss' || this.kills % 4 === 0) {
-        this.floor++;
-      }
+  handlePointerMove(x, y) {
+    if (this.isAiming) {
+      this.updateAim(x, y);
     }
   }
 
-  shuffleBoard() {
-    if (this.state !== 'PLAYING') return;
-    soundEngine.playFever();
-    
-    // Randomize all current non-null tiles
-    const tiles = this.board.filter(t => t !== null);
-    this.board = Array(this.GRID_SIZE * this.GRID_SIZE).fill(null);
-    
-    tiles.forEach(tile => {
-      const emptyIndices = [];
-      this.board.forEach((t, idx) => { if (!t) emptyIndices.push(idx); });
-      if (emptyIndices.length > 0) {
-        const r = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-        this.board[r] = tile;
+  handlePointerUp() {
+    if (!this.isAiming) return;
+    this.isAiming = false;
+    this.targetTimeScale = 1.0;
+    this.fireLasers();
+  }
+
+  updateAim(x, y) {
+    const dx = x - this.shooter.x;
+    const dy = y - this.shooter.y;
+    // Limit angle upward
+    let angle = Math.atan2(dy, dx);
+    if (angle > -0.2) angle = -0.2;
+    if (angle < -Math.PI + 0.2) angle = -Math.PI + 0.2;
+    this.aimAngle = angle;
+  }
+
+  fireLasers() {
+    this.state = 'FIRING';
+    this.ballsToFire = this.ballCount;
+    this.comboCount = 0;
+  }
+
+  update() {
+    // Time Scale interpolation
+    this.timeScale += (this.targetTimeScale - this.timeScale) * 0.2;
+
+    // Screen Shake decay
+    if (this.shake > 0) this.shake *= 0.9;
+
+    // Fire laser balls sequentially
+    if (this.ballsToFire > 0) {
+      this.fireTimer += 1;
+      if (this.fireTimer >= 2) {
+        this.fireTimer = 0;
+        const speed = 16;
+        this.balls.push({
+          x: this.shooter.x,
+          y: this.shooter.y,
+          vx: Math.cos(this.aimAngle) * speed,
+          vy: Math.sin(this.aimAngle) * speed,
+          radius: 5,
+          hue: (this.ballsToFire * 12) % 360
+        });
+        soundEngine.playLaserShot();
+        this.ballsToFire--;
       }
-    });
+    }
 
-    // Spawn 1 extra weapon/heal
-    this.spawnRandomTile();
-    this.renderBoard();
-    if (this.onUIUpdate) this.onUIUpdate();
-  }
+    // Update laser balls physics
+    for (let i = this.balls.length - 1; i >= 0; i--) {
+      const b = this.balls[i];
 
-  usePotion(index) {
-    const tile = this.board[index];
-    const healAmount = tile.level * 25;
-    this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
-    this.board[index] = null;
-    soundEngine.playHeal();
-  }
+      // Move scaled by time
+      b.x += b.vx * this.timeScale;
+      b.y += b.vy * this.timeScale;
 
-  useShield(index) {
-    const tile = this.board[index];
-    const shieldAmount = tile.level * 15;
-    this.player.shield += shieldAmount;
-    this.board[index] = null;
-    soundEngine.playShield();
-  }
+      // Wall Collisions
+      if (b.x - b.radius < 0) { b.x = b.radius; b.vx *= -1; soundEngine.playBounce(); }
+      if (b.x + b.radius > this.width) { b.x = this.width - b.radius; b.vx *= -1; soundEngine.playBounce(); }
+      if (b.y - b.radius < 60) { b.y = 60 + b.radius; b.vy *= -1; soundEngine.playBounce(); }
 
-  endTurn() {
-    // Monsters Attack
-    this.board.forEach(tile => {
-      if (tile && (tile.type === 'monster' || tile.type === 'boss')) {
-        let dmg = tile.atk;
-        if (this.player.shield > 0) {
-          if (this.player.shield >= dmg) {
-            this.player.shield -= dmg;
-            dmg = 0;
-          } else {
-            dmg -= this.player.shield;
-            this.player.shield = 0;
+      // Bottom boundary -> Ball destroyed
+      if (b.y > this.height) {
+        this.balls.splice(i, 1);
+        continue;
+      }
+
+      // Block Collisions
+      for (let j = this.blocks.length - 1; j >= 0; j--) {
+        const blk = this.blocks[j];
+        if (this.checkCollision(b, blk)) {
+          blk.hp--;
+          this.shake = 4;
+          this.comboCount++;
+          soundEngine.playBounce();
+
+          // Spawn sparkle particles
+          this.spawnSparkles(b.x, b.y, blk.hue);
+
+          if (blk.hp <= 0) {
+            soundEngine.playBlockDestroy();
+            this.spawnExplosion(blk.x + blk.w / 2, blk.y + blk.h / 2, blk.hue);
+            this.blocks.splice(j, 1);
           }
+          break;
         }
-        if (dmg > 0) {
-          this.player.hp -= dmg;
-          soundEngine.playDamage();
-        }
-      }
-    });
-
-    if (this.player.hp <= 0) {
-      this.player.hp = 0;
-      this.state = 'GAMEOVER';
-    } else {
-      this.spawnRandomTile();
-      if (this.board.filter(t => t !== null).length < 5) {
-        this.spawnRandomTile();
       }
     }
 
-    this.renderBoard();
-    if (this.onUIUpdate) this.onUIUpdate();
+    // Check Stage Clear
+    if (this.state === 'FIRING' && this.blocks.length === 0) {
+      soundEngine.playStageClear();
+      this.stage++;
+      if (this.stage > this.highScore) {
+        this.highScore = this.stage;
+        localStorage.setItem('chrono_bounce_best', this.highScore);
+      }
+      this.ballCount += 4;
+      this.balls = [];
+      this.ballsToFire = 0;
+      this.generateStageBlocks();
+      this.state = 'AIMING';
+    }
+
+    // Check Turn End (All balls fell)
+    if (this.state === 'FIRING' && this.balls.length === 0 && this.ballsToFire === 0) {
+      this.state = 'AIMING';
+    }
+
+    // Update Particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= 0.03;
+      if (p.alpha <= 0) this.particles.splice(i, 1);
+    }
   }
 
-  renderBoard() {
-    this.gridElement.innerHTML = '';
+  checkCollision(ball, rect) {
+    const nearestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.w));
+    const nearestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.h));
+    const dx = ball.x - nearestX;
+    const dy = ball.y - nearestY;
     
-    this.board.forEach((tile, index) => {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      
-      if (this.selectedCell === index) {
-        cell.classList.add('selected');
-      }
-      
-      if (tile) {
-        cell.classList.add(`tile-${tile.type}`);
-        
-        let icon = '⚔️';
-        if (tile.type === 'shield') icon = '🛡️';
-        else if (tile.type === 'potion') icon = '🧪';
-        else if (tile.type === 'monster') icon = '👾';
-        else if (tile.type === 'boss') icon = '👹';
-        
-        let infoText = `Lv.${tile.level}`;
-        if (tile.type === 'monster' || tile.type === 'boss') {
-          infoText = `HP:${tile.hp}`;
-        }
-        
-        cell.innerHTML = `
-          <div class="tile-icon">${icon}</div>
-          <div class="tile-level">${infoText}</div>
-        `;
-      }
+    if (dx * dx + dy * dy < ball.radius * ball.radius) {
+      // Simple bounce normal
+      if (Math.abs(dx) > Math.abs(dy)) ball.vx *= -1;
+      else ball.vy *= -1;
+      return true;
+    }
+    return false;
+  }
 
-      cell.onclick = (e) => {
-        e.stopPropagation();
-        this.handleCellClick(index);
-      };
+  spawnSparkles(x, y, hue) {
+    for (let i = 0; i < 4; i++) {
+      this.particles.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6,
+        hue: hue,
+        radius: 3,
+        alpha: 1
+      });
+    }
+  }
 
-      this.gridElement.appendChild(cell);
+  spawnExplosion(x, y, hue) {
+    for (let i = 0; i < 16; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = Math.random() * 8 + 2;
+      this.particles.push({
+        x: x, y: y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        hue: hue,
+        radius: 4,
+        alpha: 1
+      });
+    }
+  }
+
+  draw() {
+    this.ctx.save();
+    // Screen Shake Transform
+    if (this.shake > 0.5) {
+      const rx = (Math.random() - 0.5) * this.shake;
+      const ry = (Math.random() - 0.5) * this.shake;
+      this.ctx.translate(rx, ry);
+    }
+
+    this.ctx.clearRect(0, 0, this.width, this.height);
+
+    // Draw Aiming Guide Line
+    if (this.isAiming) {
+      this.ctx.save();
+      this.ctx.strokeStyle = '#00ffaa';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([8, 6]);
+      this.ctx.shadowColor = '#00ffaa';
+      this.ctx.shadowBlur = 15;
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.shooter.x, this.shooter.y);
+      this.ctx.lineTo(this.shooter.x + Math.cos(this.aimAngle) * 400, this.shooter.y + Math.sin(this.aimAngle) * 400);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
+    // Draw Blocks
+    this.blocks.forEach(blk => {
+      this.ctx.save();
+      const color = `hsl(${blk.hue}, 90%, 60%)`;
+      this.ctx.fillStyle = color;
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 12;
+      this.ctx.beginPath();
+      this.ctx.roundRect(blk.x, blk.y, blk.w, blk.h, 8);
+      this.ctx.fill();
+
+      // Block HP Text
+      this.ctx.fillStyle = '#000';
+      this.ctx.font = '700 13px Orbitron, sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(blk.hp, blk.x + blk.w / 2, blk.y + blk.h / 2);
+      this.ctx.restore();
     });
+
+    // Draw Laser Balls
+    this.balls.forEach(b => {
+      this.ctx.save();
+      const color = `hsl(${b.hue}, 100%, 65%)`;
+      this.ctx.fillStyle = color;
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 10;
+      this.ctx.beginPath();
+      this.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+    });
+
+    // Draw Particles
+    this.particles.forEach(p => {
+      this.ctx.save();
+      this.ctx.globalAlpha = p.alpha;
+      this.ctx.fillStyle = `hsl(${p.hue}, 100%, 70%)`;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+    });
+
+    // Draw Shooter Launcher Base
+    this.ctx.save();
+    this.ctx.fillStyle = '#00f0ff';
+    this.ctx.shadowColor = '#00f0ff';
+    this.ctx.shadowBlur = 20;
+    this.ctx.beginPath();
+    this.ctx.arc(this.shooter.x, this.shooter.y, 16, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+
+    this.ctx.restore();
   }
 }

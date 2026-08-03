@@ -1,40 +1,44 @@
-import { DungeonMergeGame } from './game.js';
+import { ChronoBounceGame } from './game.js';
 import { soundEngine } from './audio.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  const gridContainer = document.getElementById('grid-container');
+  const canvas = document.getElementById('game-canvas');
   const startScreen = document.getElementById('start-screen');
   const gameoverScreen = document.getElementById('gameover-screen');
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
-  const shuffleBtn = document.getElementById('shuffle-btn');
-  
-  const floorDisplay = document.getElementById('floor-display');
-  const goldDisplay = document.getElementById('gold-display');
-  const hpBarFill = document.getElementById('hp-bar-fill');
-  const hpText = document.getElementById('hp-text');
-  const shieldText = document.getElementById('shield-text');
-  const finalFloor = document.getElementById('final-floor');
-  const finalKills = document.getElementById('final-kills');
+  const scoreDisplay = document.getElementById('score-display');
+  const highScoreDisplay = document.getElementById('high-score-display');
+  const finalScore = document.getElementById('final-score');
+  const comboBanner = document.getElementById('combo-banner');
+  const comboText = document.getElementById('combo-text');
 
-  function updateUIHeader() {
-    floorDisplay.textContent = `F ${game.floor}`;
-    goldDisplay.textContent = `${game.gold} G`;
+  const game = new ChronoBounceGame(canvas);
+
+  function updateUI() {
+    scoreDisplay.textContent = `STAGE ${game.stage}`;
+    highScoreDisplay.textContent = `STAGE ${game.highScore}`;
     
-    const hpPct = Math.max(0, (game.player.hp / game.player.maxHp) * 100);
-    hpBarFill.style.width = `${hpPct}%`;
-    hpText.textContent = `${game.player.hp}/${game.player.maxHp}`;
-    shieldText.textContent = `${game.player.shield}`;
+    if (game.comboCount > 10) {
+      comboText.textContent = `⚡ FEVER BOUNCE x${game.comboCount}!`;
+      comboBanner.classList.remove('hidden');
+    } else {
+      comboBanner.classList.add('hidden');
+    }
 
     if (game.state === 'GAMEOVER') {
-      finalFloor.textContent = `F ${game.floor}`;
-      finalKills.textContent = `${game.kills}`;
+      finalScore.textContent = `STAGE ${game.stage}`;
       gameoverScreen.classList.remove('hidden');
       gameoverScreen.classList.add('active');
     }
   }
 
-  const game = new DungeonMergeGame(gridContainer, updateUIHeader);
+  function loop() {
+    game.update();
+    game.draw();
+    updateUI();
+    requestAnimationFrame(loop);
+  }
 
   function startGame() {
     soundEngine.init();
@@ -56,16 +60,30 @@ window.addEventListener('DOMContentLoaded', () => {
     game.start();
   });
 
-  shuffleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    game.shuffleBoard();
-  });
-
   startScreen.addEventListener('click', (e) => {
     if (e.target.tagName !== 'A' && !e.target.classList.contains('btn-portal')) {
       startGame();
     }
   });
 
-  game.start();
+  // Pointer Events for Laser Aiming & Slow-Mo
+  window.addEventListener('pointerdown', (e) => {
+    if (game.state === 'AIMING') {
+      game.handlePointerDown(e.clientX, e.clientY);
+    }
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (game.state === 'AIMING') {
+      game.handlePointerMove(e.clientX, e.clientY);
+    }
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (game.state === 'AIMING') {
+      game.handlePointerUp();
+    }
+  });
+
+  loop();
 });
