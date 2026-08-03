@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Gravity Shift Dash - 10%studio Game 2</title>
   <meta name="description" content="重力を操り、世界ランキング1位を目指せ！10%studioの第2弾ハイスピードランナー">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -40,12 +40,12 @@
         <input type="text" id="player-name-input" maxlength="10" placeholder="NAME" value="SPEED_RUNNER">
       </div>
 
-      <button id="start-btn" class="btn btn-primary" style="margin-bottom: 0 !important;">RUN NOW</button>
-      
-      <!-- ABSOLUTE DOM SPACER -->
-      <div style="height: 30px; width: 100%; clear: both;"></div>
+      <div class="menu-button-group">
+        <button id="start-btn" class="btn btn-primary">RUN NOW</button>
+        <button id="leaderboard-btn" class="btn btn-secondary">🏆 LEADERBOARD</button>
+        <a href="../../index.html" class="btn btn-secondary btn-portal">🏠 MAIN PORTAL</a>
+      </div>
 
-      <button id="leaderboard-btn" class="btn btn-secondary">🏆 LEADERBOARD</button>
       <p class="instruction">タップで反転！空中引き返しは最大2回（着地で即回復）</p>
     </div>
 
@@ -80,6 +80,7 @@
           </svg>
           SHARE RANK
         </button>
+        <a href="../../index.html" class="btn btn-secondary btn-portal">🏠 MAIN PORTAL</a>
       </div>
     </div>
 

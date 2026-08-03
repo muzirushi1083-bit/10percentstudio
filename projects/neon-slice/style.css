@@ -184,7 +184,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .player-input-box label {
@@ -212,6 +212,16 @@ html, body {
 #player-name-input:focus {
   border-color: var(--primary-neon);
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+/* Menu Button Group Container */
+.menu-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px !important;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 10px;
 }
 
 /* Rewarded Ad Modal */
@@ -332,7 +342,7 @@ html, body {
   font-size: 11px;
   letter-spacing: 3px;
   color: var(--text-sub);
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .overlay-title {
@@ -366,14 +376,9 @@ html, body {
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
   max-width: 280px;
-}
-
-/* Start screen specific large button separation */
-#start-screen #start-btn {
-  margin-bottom: 28px !important;
 }
 
 .btn {
@@ -390,6 +395,7 @@ html, body {
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -422,4 +428,10 @@ html, body {
 
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-portal {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  font-size: 12px;
 }
