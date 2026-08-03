@@ -363,7 +363,6 @@ html, body {
   margin: 8px 0;
 }
 
-/* Action Buttons (Widened Gap to prevent mis-clicks) */
 .action-buttons {
   display: flex;
   flex-direction: column;
@@ -372,12 +371,9 @@ html, body {
   max-width: 280px;
 }
 
-/* Start screen buttons style & gap */
-#start-screen .btn {
-  margin-bottom: 18px;
-}
-#start-screen .btn:last-of-type {
-  margin-bottom: 0;
+/* Start screen specific large button separation */
+#start-screen #start-btn {
+  margin-bottom: 28px !important;
 }
 
 .btn {
