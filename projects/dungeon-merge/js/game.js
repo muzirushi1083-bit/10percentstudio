@@ -6,7 +6,7 @@ export class DungeonMergeGame {
     this.onUIUpdate = onUIUpdate;
     this.GRID_SIZE = 4;
     
-    this.state = 'START'; // START, PLAYING, GAMEOVER
+    this.state = 'START';
     this.floor = 1;
     this.gold = 0;
     this.kills = 0;
@@ -90,7 +90,7 @@ export class DungeonMergeGame {
 
     const clickedTile = this.board[index];
 
-    // Case 1: No cell selected
+    // Case 1: No cell selected -> SELECT or CONSUME
     if (this.selectedCell === null) {
       if (clickedTile) {
         if (clickedTile.type === 'potion') {
@@ -102,7 +102,7 @@ export class DungeonMergeGame {
           this.endTurn();
           return;
         }
-        // Select cell (turns YELLOW)
+        // Select cell for action (Turns YELLOW)
         this.selectedCell = index;
         this.renderBoard();
         if (this.onUIUpdate) this.onUIUpdate();
@@ -129,7 +129,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Case 4: Merge same type & level
+    // Case 4: Merge same type & level (Swords)
     if (sourceTile.type === clickedTile.type && sourceTile.level === clickedTile.level && sourceTile.type !== 'monster' && sourceTile.type !== 'boss') {
       clickedTile.level += 1;
       this.board[this.selectedCell] = null;
@@ -164,7 +164,7 @@ export class DungeonMergeGame {
       return;
     }
 
-    // Default: Switch selection to newly clicked tile
+    // Default: Change selection to clicked tile
     this.selectedCell = index;
     this.renderBoard();
     if (this.onUIUpdate) this.onUIUpdate();
@@ -225,7 +225,6 @@ export class DungeonMergeGame {
       const cell = document.createElement('div');
       cell.className = 'cell';
       
-      // Explicit yellow selection class
       if (this.selectedCell === index) {
         cell.classList.add('selected');
       }
@@ -250,8 +249,9 @@ export class DungeonMergeGame {
         `;
       }
 
-      cell.onpointerdown = (e) => {
-        e.preventDefault();
+      // STRICT SINGLE CLICK LISTENER
+      cell.onclick = (e) => {
+        e.stopPropagation();
         this.handleCellClick(index);
       };
 
