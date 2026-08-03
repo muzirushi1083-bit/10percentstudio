@@ -183,8 +183,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 28px;
 }
 
 .player-input-box label {
@@ -202,10 +202,10 @@ html, body {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(0, 240, 255, 0.4);
   color: var(--primary-neon);
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
   outline: none;
-  width: 180px;
+  width: 200px;
   letter-spacing: 2px;
 }
 
@@ -332,7 +332,7 @@ html, body {
   font-size: 11px;
   letter-spacing: 3px;
   color: var(--text-sub);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .overlay-title {
@@ -363,20 +363,29 @@ html, body {
   margin: 8px 0;
 }
 
+/* Action Buttons (Widened Gap to prevent mis-clicks) */
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   width: 100%;
   max-width: 280px;
+}
+
+/* Start screen buttons style & gap */
+#start-screen .btn {
+  margin-bottom: 18px;
+}
+#start-screen .btn:last-of-type {
+  margin-bottom: 0;
 }
 
 .btn {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 2px;
-  padding: 12px 20px;
+  padding: 15px 24px;
   border: none;
   border-radius: 30px;
   cursor: pointer;
