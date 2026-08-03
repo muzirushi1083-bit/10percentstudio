@@ -1,429 +1,317 @@
 import { soundEngine } from './audio.js';
-import { EffectManager } from './effects.js';
+import { particleSystem } from './effects.js';
 
 export class NeonSliceGame {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.effects = new EffectManager();
     
-    // Game constants
-    this.BLOCK_HEIGHT = 20;
-    this.INITIAL_SIZE = 140;
-    this.PERFECT_TOLERANCE = 5;
-    
-    // State variables
-    this.state = 'START'; // START, PLAYING, GAMEOVER
+    this.state = 'START'; // START, PLAYING, GAMEOVER, FEVER
     this.score = 0;
-    this.highScore = 0;
-    try {
-      this.highScore = parseInt(localStorage.getItem('neon_slice_highscore') || '0', 10);
-    } catch (e) {
-      this.highScore = 0;
-    }
+    this.highScore = localStorage.getItem('neon_slice_highscore') || 0;
     
-    this.perfectStreak = 0;
-    this.isFever = false;
-    this.feverTimer = 0;
-    this.gameOverReason = '';
-    
+    // Stack Physics Configuration
+    this.BOX_HEIGHT = 16;
     this.stack = [];
+    this.cutPieces = [];
     this.activeBlock = null;
+    this.direction = 'x'; // 'x' or 'z'
+    this.speed = 3.5;
+    this.perfectCombo = 0;
+    
+    // Fever & Power-ups
+    this.feverMeter = 0;
+    this.isSlowMotion = false;
+    this.slowMotionTimer = 0;
+    
     this.cameraY = 0;
     this.targetCameraY = 0;
-    this.speed = 3;
-    this.direction = 'x';
-    this.movePos = 0;
-    this.moveLimit = 220;
-    this.moveSign = 1;
-    
-    this.hue = 180;
-    this.rainbowHue = 0;
-    
+
     this.resize();
+    window.addEventListener('resize', () => this.resize());
   }
 
   resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.centerX = this.canvas.width / 2;
-    this.centerY = this.canvas.height / 2 + 100;
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
   }
 
   start() {
     this.score = 0;
-    this.perfectStreak = 0;
-    this.isFever = false;
-    this.feverTimer = 0;
-    this.gameOverReason = '';
-    this.hue = Math.floor(Math.random() * 360);
+    this.stack = [];
+    this.cutPieces = [];
+    this.perfectCombo = 0;
+    this.feverMeter = 0;
+    this.isSlowMotion = false;
+    this.slowMotionTimer = 0;
     this.speed = 3.5;
     this.cameraY = 0;
     this.targetCameraY = 0;
-    this.effects.reset();
     
-    this.stack = [{
+    // Base Box
+    const baseWidth = Math.min(this.width * 0.35, 160);
+    const baseDepth = baseWidth;
+    
+    this.stack.push({
       x: 0,
       z: 0,
       y: 0,
-      width: this.INITIAL_SIZE,
-      depth: this.INITIAL_SIZE,
-      color: this.getColor(0),
-      type: 'normal'
-    }];
-    
-    this.spawnBlock();
+      width: baseWidth,
+      depth: baseDepth,
+      hue: 180
+    });
+
+    this.spawnNextBlock();
     this.state = 'PLAYING';
   }
 
-  // Revive player via Rewarded Ad
-  revive() {
-    if (this.stack.length > 0) {
-      const top = this.stack[this.stack.length - 1];
-      top.width = Math.max(top.width, 100);
-      top.depth = Math.max(top.depth, 100);
-    }
-    this.perfectStreak = 0;
-    this.isFever = true;
-    this.feverTimer = 120; // Short fever bonus on revive!
-    this.spawnBlock();
-    this.state = 'PLAYING';
-  }
-
-  getColor(index) {
-    const currentHue = (this.hue + index * 12) % 360;
-    return `hsl(${currentHue}, 100%, 60%)`;
-  }
-
-  spawnBlock() {
+  spawnNextBlock() {
     const prevBlock = this.stack[this.stack.length - 1];
-    this.direction = this.stack.length % 2 === 0 ? 'x' : 'z';
-    this.moveSign = Math.random() > 0.5 ? 1 : -1;
-    this.movePos = -this.moveLimit * this.moveSign;
+    this.direction = this.direction === 'x' ? 'z' : 'x';
     
-    let type = 'normal';
-    if (this.score > 5) {
-      const rand = Math.random();
-      if (rand < 0.12) type = 'bomb';
-      else if (rand < 0.22) type = 'slow';
-    }
-
-    let color = this.getColor(this.stack.length);
-    if (type === 'bomb') color = 'hsl(350, 100%, 50%)';
-    else if (type === 'slow') color = 'hsl(180, 100%, 50%)';
+    // Progressive Speed
+    this.speed = 3.5 + Math.min(this.score * 0.08, 6.0);
+    const hue = (180 + this.score * 8) % 360;
 
     this.activeBlock = {
-      x: this.direction === 'x' ? this.movePos : prevBlock.x,
-      z: this.direction === 'z' ? this.movePos : prevBlock.z,
-      y: this.stack.length * this.BLOCK_HEIGHT,
+      x: this.direction === 'x' ? -this.width * 0.4 : prevBlock.x,
+      z: this.direction === 'z' ? -this.width * 0.4 : prevBlock.z,
+      y: this.stack.length * this.BOX_HEIGHT,
       width: prevBlock.width,
       depth: prevBlock.depth,
-      color: color,
-      type: type
+      hue: hue,
+      dirSign: 1
     };
 
-    let baseSpeed = Math.min(8.5, 3.5 + this.score * 0.12);
-    if (type === 'slow') baseSpeed *= 0.5;
-    this.speed = baseSpeed;
+    this.targetCameraY = (this.stack.length - 3) * this.BOX_HEIGHT;
   }
 
   slice() {
-    if (this.state !== 'PLAYING' || !this.activeBlock) return;
+    if (this.state !== 'PLAYING' && this.state !== 'FEVER') return;
     
-    soundEngine.init();
     const prevBlock = this.stack[this.stack.length - 1];
-    const active = this.activeBlock;
-    
-    if (active.type === 'bomb') {
-      soundEngine.playBombExplosion();
-      this.effects.addSparkles(active.x, active.y, active.z, '#ff0033', 60);
-      this.triggerGameOver('💣 BOMB EXPLODED!');
+    const curr = this.activeBlock;
+
+    let delta = 0;
+    let overlap = 0;
+    let size = 0;
+
+    if (this.direction === 'x') {
+      delta = curr.x - prevBlock.x;
+      size = curr.width;
+    } else {
+      delta = curr.z - prevBlock.z;
+      size = curr.depth;
+    }
+
+    const absDelta = Math.abs(delta);
+    const PERFECT_TOLERANCE = 5;
+
+    // PERFECT SLICE
+    if (absDelta < PERFECT_TOLERANCE) {
+      if (this.direction === 'x') curr.x = prevBlock.x;
+      else curr.z = prevBlock.z;
+
+      this.perfectCombo++;
+      this.score += 1 + Math.floor(this.perfectCombo / 3);
+      soundEngine.playPerfect(this.perfectCombo);
+      particleSystem.createSparkles(this.toScreenPos(curr.x, curr.y, curr.z), curr.hue);
+
+      // FEVER Trigger (5 Perfects in a row)
+      if (this.perfectCombo >= 5 && this.state !== 'FEVER') {
+        this.triggerFever();
+      }
+
+      this.stack.push(curr);
+      this.spawnNextBlock();
       return;
     }
 
-    let diff = 0;
-    let overlap = 0;
-    
-    if (this.direction === 'x') {
-      diff = active.x - prevBlock.x;
-      overlap = prevBlock.width - Math.abs(diff);
-    } else {
-      diff = active.z - prevBlock.z;
-      overlap = prevBlock.depth - Math.abs(diff);
-    }
+    // REGULAR SLICE
+    this.perfectCombo = 0;
+    overlap = size - absDelta;
 
     if (overlap <= 0) {
-      this.triggerGameOver('MISSED!');
+      // MISSED COMPLETE BLOCK -> GAME OVER
+      soundEngine.playGameOver();
+      particleSystem.createExplosion(this.toScreenPos(curr.x, curr.y, curr.z), curr.hue);
+      this.gameOver();
       return;
     }
 
-    const isPerfect = Math.abs(diff) <= this.PERFECT_TOLERANCE;
-    
-    if (isPerfect) {
-      this.perfectStreak++;
-      
-      if (this.perfectStreak >= 3) {
-        this.isFever = true;
-        this.feverTimer = 180;
-        soundEngine.playFeverSound();
-        active.width = this.INITIAL_SIZE;
-        active.depth = this.INITIAL_SIZE;
-      } else {
-        soundEngine.playPerfectSound();
-      }
-      
-      if (this.direction === 'x') active.x = prevBlock.x;
-      else active.z = prevBlock.z;
-      
-      this.effects.addSparkles(active.x, active.y, active.z, '#ffffff', 30);
+    // Cut calculation
+    if (this.direction === 'x') {
+      const cutWidth = absDelta;
+      const newWidth = overlap;
+      const cutX = delta > 0 ? curr.x + newWidth / 2 + cutWidth / 2 : curr.x - newWidth / 2 - cutWidth / 2;
+      curr.x = delta > 0 ? prevBlock.x + cutWidth / 2 : prevBlock.x - cutWidth / 2;
+      curr.width = newWidth;
+
+      this.cutPieces.push({
+        x: cutX, y: curr.y, z: curr.z,
+        width: cutWidth, depth: curr.depth,
+        vy: 2, vx: delta > 0 ? 3 : -3, vz: 0,
+        hue: curr.hue, alpha: 1
+      });
     } else {
-      this.perfectStreak = 0;
-      soundEngine.playCutSound(this.score);
-      
-      let newWidth = active.width;
-      let newDepth = active.depth;
-      
-      let sliceWidth = 0;
-      let sliceDepth = 0;
-      let sliceX = active.x;
-      let sliceZ = active.z;
+      const cutDepth = absDelta;
+      const newDepth = overlap;
+      const cutZ = delta > 0 ? curr.z + newDepth / 2 + cutDepth / 2 : curr.z - newDepth / 2 - cutDepth / 2;
+      curr.z = delta > 0 ? prevBlock.z + cutDepth / 2 : prevBlock.z - cutDepth / 2;
+      curr.depth = newDepth;
 
-      if (this.direction === 'x') {
-        newWidth = overlap;
-        sliceWidth = Math.abs(diff);
-        if (diff > 0) {
-          active.x = prevBlock.x + sliceWidth / 2;
-          sliceX = active.x + newWidth / 2 + sliceWidth / 2;
-        } else {
-          active.x = prevBlock.x - sliceWidth / 2;
-          sliceX = active.x - newWidth / 2 - sliceWidth / 2;
-        }
-        active.width = newWidth;
-        sliceDepth = active.depth;
-      } else {
-        newDepth = overlap;
-        sliceDepth = Math.abs(diff);
-        if (diff > 0) {
-          active.z = prevBlock.z + sliceDepth / 2;
-          sliceZ = active.z + newDepth / 2 + sliceDepth / 2;
-        } else {
-          active.z = prevBlock.z - sliceDepth / 2;
-          sliceZ = active.z - newDepth / 2 - sliceDepth / 2;
-        }
-        active.depth = newDepth;
-        sliceWidth = active.width;
-      }
-
-      this.effects.addSlicedDebris(
-        sliceX, active.y, sliceZ,
-        sliceWidth, sliceDepth, this.BLOCK_HEIGHT,
-        active.color, this.direction
-      );
+      this.cutPieces.push({
+        x: curr.x, y: curr.y, z: cutZ,
+        width: curr.width, depth: cutDepth,
+        vy: 2, vx: 0, vz: delta > 0 ? 3 : -3,
+        hue: curr.hue, alpha: 1
+      });
     }
 
-    const pointsGained = this.isFever ? 2 : 1;
-    this.score += pointsGained;
-    
-    this.stack.push({ ...active });
-    
-    if (this.score > this.highScore) {
-      this.highScore = this.score;
-      try {
-        localStorage.setItem('neon_slice_highscore', this.highScore.toString());
-      } catch(e) {}
-    }
-
-    if (this.stack.length > 5) {
-      this.targetCameraY = (this.stack.length - 5) * this.BLOCK_HEIGHT;
-    }
-
-    this.spawnBlock();
+    soundEngine.playSlice();
+    this.score++;
+    this.stack.push(curr);
+    this.spawnNextBlock();
   }
 
-  triggerGameOver(reason = 'GAMEOVER') {
+  triggerFever() {
+    this.state = 'FEVER';
+    soundEngine.playFever();
+    setTimeout(() => {
+      if (this.state === 'FEVER') this.state = 'PLAYING';
+    }, 4000);
+  }
+
+  gameOver() {
     this.state = 'GAMEOVER';
-    this.gameOverReason = reason;
-    soundEngine.playGameOverSound();
-    
-    if (this.activeBlock) {
-      this.effects.addSlicedDebris(
-        this.activeBlock.x, this.activeBlock.y, this.activeBlock.z,
-        this.activeBlock.width, this.activeBlock.depth, this.BLOCK_HEIGHT,
-        this.activeBlock.color, this.direction
-      );
-      this.activeBlock = null;
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      localStorage.setItem('neon_slice_highscore', this.highScore);
     }
   }
 
   update() {
-    this.effects.update();
-    this.rainbowHue = (this.rainbowHue + 4) % 360;
-
-    if (this.isFever) {
-      this.feverTimer--;
-      if (this.feverTimer <= 0) {
-        this.isFever = false;
-      }
-    }
-    
+    // Camera smooth follow
     this.cameraY += (this.targetCameraY - this.cameraY) * 0.1;
 
-    if (this.state === 'PLAYING' && this.activeBlock) {
-      this.movePos += this.speed * this.moveSign;
-      if (Math.abs(this.movePos) >= this.moveLimit) {
-        this.moveSign *= -1;
+    // Active block movement
+    if (this.activeBlock && (this.state === 'PLAYING' || this.state === 'FEVER')) {
+      const currentSpeed = this.state === 'FEVER' ? this.speed * 0.6 : this.speed;
+      const limit = this.width * 0.35;
+
+      if (this.direction === 'x') {
+        this.activeBlock.x += currentSpeed * this.activeBlock.dirSign;
+        if (this.activeBlock.x > limit) {
+          this.activeBlock.x = limit;
+          this.activeBlock.dirSign = -1;
+        } else if (this.activeBlock.x < -limit) {
+          this.activeBlock.x = -limit;
+          this.activeBlock.dirSign = 1;
+        }
+      } else {
+        this.activeBlock.z += currentSpeed * this.activeBlock.dirSign;
+        if (this.activeBlock.z > limit) {
+          this.activeBlock.z = limit;
+          this.activeBlock.dirSign = -1;
+        } else if (this.activeBlock.z < -limit) {
+          this.activeBlock.z = -limit;
+          this.activeBlock.dirSign = 1;
+        }
       }
-      
-      if (this.direction === 'x') this.activeBlock.x = this.movePos;
-      else this.activeBlock.z = this.movePos;
     }
+
+    // Physics update for cut pieces
+    for (let i = this.cutPieces.length - 1; i >= 0; i--) {
+      const p = this.cutPieces[i];
+      p.y -= p.vy;
+      p.vy += 0.4;
+      p.x += p.vx;
+      p.z += p.vz;
+      p.alpha -= 0.02;
+      if (p.alpha <= 0) this.cutPieces.splice(i, 1);
+    }
+
+    particleSystem.update();
   }
 
-  projectIso(x, y, z) {
-    const isoX = (x - z) * 0.866;
-    const isoY = (x + z) * 0.5 - y;
+  toScreenPos(x, y, z) {
+    const isoX = (x - z) * 0.707;
+    const isoY = (x + z) * 0.4 + (y - this.cameraY);
     return {
-      x: this.centerX + isoX,
-      y: this.centerY + isoY
+      x: this.width / 2 + isoX,
+      y: this.height * 0.65 - isoY
     };
   }
 
-  drawIsoBlock(block, isGhost = false) {
-    const { x, y, z, width, depth, type } = block;
-    let color = block.color;
-    
-    if (this.isFever) {
-      color = `hsl(${(this.rainbowHue + y) % 360}, 100%, 65%)`;
+  draw() {
+    this.ctx.clearRect(0, 0, this.width, this.height);
+
+    // Draw Stack Blocks
+    for (let i = 0; i < this.stack.length; i++) {
+      this.drawIsoBox(this.stack[i]);
     }
 
-    const renderY = y - this.cameraY;
-    const hW = width / 2;
-    const hD = depth / 2;
+    // Draw Cut Falling Pieces
+    for (let i = 0; i < this.cutPieces.length; i++) {
+      this.drawIsoBox(this.cutPieces[i]);
+    }
 
-    const p1 = this.projectIso(x - hW, renderY + this.BLOCK_HEIGHT, z - hD);
-    const p2 = this.projectIso(x + hW, renderY + this.BLOCK_HEIGHT, z - hD);
-    const p3 = this.projectIso(x + hW, renderY + this.BLOCK_HEIGHT, z + hD);
-    const p4 = this.projectIso(x - hW, renderY + this.BLOCK_HEIGHT, z + hD);
+    // Draw Active Moving Block
+    if (this.activeBlock && (this.state === 'PLAYING' || this.state === 'FEVER')) {
+      this.drawIsoBox(this.activeBlock);
+    }
 
-    const b2 = this.projectIso(x + hW, renderY, z - hD);
-    const b3 = this.projectIso(x + hW, renderY, z + hD);
-    const b4 = this.projectIso(x - hW, renderY, z + hD);
+    particleSystem.draw(this.ctx);
+  }
 
-    const ctx = this.ctx;
-    ctx.save();
+  drawIsoBox(box) {
+    const pos = this.toScreenPos(box.x, box.y, box.z);
+    const w = box.width * 0.707;
+    const d = box.depth * 0.707;
+    const h = this.BOX_HEIGHT;
 
-    ctx.shadowColor = type === 'bomb' ? '#ff0033' : color;
-    ctx.shadowBlur = type === 'bomb' ? 25 : 12;
+    this.ctx.save();
+    this.ctx.globalAlpha = box.alpha !== undefined ? box.alpha : 1;
 
-    // Left Face
-    ctx.fillStyle = this.adjustLightness(color, -20);
-    ctx.beginPath();
-    ctx.moveTo(p4.x, p4.y);
-    ctx.lineTo(p3.x, p3.y);
-    ctx.lineTo(b3.x, b3.y);
-    ctx.lineTo(b4.x, b4.y);
-    ctx.closePath();
-    ctx.fill();
-
-    // Right Face
-    ctx.fillStyle = this.adjustLightness(color, -10);
-    ctx.beginPath();
-    ctx.moveTo(p2.x, p2.y);
-    ctx.lineTo(p3.x, p3.y);
-    ctx.lineTo(b3.x, b3.y);
-    ctx.lineTo(b2.x, b2.y);
-    ctx.closePath();
-    ctx.fill();
+    // Colors & Neon Glow
+    const topColor = `hsl(${box.hue}, 90%, 65%)`;
+    const leftColor = `hsl(${box.hue}, 80%, 45%)`;
+    const rightColor = `hsl(${box.hue}, 85%, 55%)`;
 
     // Top Face
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.lineTo(p3.x, p3.y);
-    ctx.lineTo(p4.x, p4.y);
-    ctx.closePath();
-    ctx.fill();
+    this.ctx.fillStyle = topColor;
+    this.ctx.shadowColor = topColor;
+    this.ctx.shadowBlur = 12;
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos.x, pos.y - h);
+    this.ctx.lineTo(pos.x + w, pos.y - h - w * 0.5);
+    this.ctx.lineTo(pos.x, pos.y - h - w * 0.5 - d * 0.5);
+    this.ctx.lineTo(pos.x - w, pos.y - h - d * 0.5);
+    this.ctx.closePath();
+    this.ctx.fill();
 
-    ctx.strokeStyle = type === 'bomb' ? '#ff0000' : '#ffffff';
-    ctx.lineWidth = type === 'bomb' ? 3 : 1.5;
-    ctx.stroke();
+    // Left Face
+    this.ctx.fillStyle = leftColor;
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos.x - w, pos.y - h - d * 0.5);
+    this.ctx.lineTo(pos.x, pos.y - h);
+    this.ctx.lineTo(pos.x, pos.y);
+    this.ctx.lineTo(pos.x - w, pos.y - d * 0.5);
+    this.ctx.closePath();
+    this.ctx.fill();
 
-    if (type === 'bomb') {
-      const topCenter = this.projectIso(x, renderY + this.BLOCK_HEIGHT, z);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px Orbitron';
-      ctx.textAlign = 'center';
-      ctx.fillText('💣 DANGER', topCenter.x, topCenter.y + 4);
-    } else if (type === 'slow') {
-      const topCenter = this.projectIso(x, renderY + this.BLOCK_HEIGHT, z);
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 11px Orbitron';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚡ SLOW', topCenter.x, topCenter.y + 4);
-    }
+    // Right Face
+    this.ctx.fillStyle = rightColor;
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos.x, pos.y - h);
+    this.ctx.lineTo(pos.x + w, pos.y - h - w * 0.5);
+    this.ctx.lineTo(pos.x + w, pos.y - w * 0.5);
+    this.ctx.lineTo(pos.x, pos.y);
+    this.ctx.closePath();
+    this.ctx.fill();
 
-    ctx.restore();
-  }
-
-  adjustLightness(hslColor, amount) {
-    const match = hslColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-    if (!match) return hslColor;
-    const h = match[1];
-    const s = match[2];
-    let l = parseInt(match[3], 10) + amount;
-    l = Math.max(0, Math.min(100, l));
-    return `hsl(${h}, ${s}%, ${l}%)`;
-  }
-
-  draw() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    this.drawBackgroundGrid();
-
-    if (this.isFever) {
-      this.ctx.save();
-      this.ctx.fillStyle = `hsla(${this.rainbowHue}, 100%, 50%, 0.08)`;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-      this.ctx.font = '900 28px Orbitron';
-      this.ctx.fillStyle = `hsl(${this.rainbowHue}, 100%, 65%)`;
-      this.ctx.textAlign = 'center';
-      this.ctx.shadowColor = `hsl(${this.rainbowHue}, 100%, 50%)`;
-      this.ctx.shadowBlur = 20;
-      this.ctx.fillText('🔥 FEVER MODE 2X SCORE 🔥', this.canvas.width / 2, 120);
-      this.ctx.restore();
-    }
-
-    this.stack.forEach(block => this.drawIsoBlock(block));
-
-    if (this.state === 'PLAYING' && this.activeBlock) {
-      this.drawIsoBlock(this.activeBlock);
-    }
-
-    this.effects.draw(this.ctx, this.cameraY, this.projectIso.bind(this));
-  }
-
-  drawBackgroundGrid() {
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.strokeStyle = this.isFever 
-      ? `hsla(${this.rainbowHue}, 100%, 50%, 0.12)` 
-      : 'rgba(0, 240, 255, 0.04)';
-    ctx.lineWidth = 1;
-    const step = 60;
-    for (let x = 0; x < this.canvas.width; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, this.canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < this.canvas.height; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.canvas.width, y);
-      ctx.stroke();
-    }
-    ctx.restore();
+    this.ctx.restore();
   }
 }
