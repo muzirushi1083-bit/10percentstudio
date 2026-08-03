@@ -18,7 +18,7 @@ export class ZombieHordeGame {
       vz: 0,
       speed: 0.22,
       weapon: 'ULTRA MACHINE GUN',
-      fireRate: 4,
+      fireRate: 5,
       fireTimer: 0
     };
 
@@ -74,17 +74,17 @@ export class ZombieHordeGame {
     const matVisor = new THREE.MeshBasicMaterial({ color: 0xff0055 });
 
     // Head Sphere
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), matSkin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), matSkin);
     head.position.y = 2.15;
     group.add(head);
 
-    // Hair / Cap
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8), matHair);
+    // Hair
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.37, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8), matHair);
     hair.position.y = 2.18;
     group.add(hair);
 
     // Visor
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.18), matVisor);
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.18), matVisor);
     visor.position.set(0, 2.15, 0.24);
     group.add(visor);
 
@@ -93,65 +93,55 @@ export class ZombieHordeGame {
     neck.position.y = 1.82;
     group.add(neck);
 
-    // Torso / Chest Armor
-    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.65, 0.45), matArmor);
+    // Chest Armor
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.65, 0.45), matArmor);
     chest.position.y = 1.4;
     group.add(chest);
 
-    // Abs / Waist
-    const waist = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.35, 0.38), matPants);
+    // Waist
+    const waist = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.38), matPants);
     waist.position.y = 0.98;
     group.add(waist);
 
-    // Left Leg Group (Thigh + Calf + Boot)
+    // Legs
     const legLGroup = new THREE.Group();
     legLGroup.position.set(-0.24, 0.8, 0);
     const thighL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 10), matPants);
     thighL.position.y = -0.22;
     legLGroup.add(thighL);
-    const calfL = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.4, 10), matPants);
-    calfL.position.y = -0.55;
-    legLGroup.add(calfL);
-    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.38), matBoots);
-    bootL.position.set(0, -0.72, 0.08);
+    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.38), matBoots);
+    bootL.position.set(0, -0.55, 0.08);
     legLGroup.add(bootL);
     group.add(legLGroup);
     this.playerLegL = legLGroup;
 
-    // Right Leg Group
     const legRGroup = new THREE.Group();
     legRGroup.position.set(0.24, 0.8, 0);
     const thighR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.45, 10), matPants);
     thighR.position.y = -0.22;
     legRGroup.add(thighR);
-    const calfR = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.4, 10), matPants);
-    calfR.position.y = -0.55;
-    legRGroup.add(calfR);
-    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.38), matBoots);
-    bootR.position.set(0, -0.72, 0.08);
+    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.38), matBoots);
+    bootR.position.set(0, -0.55, 0.08);
     legRGroup.add(bootR);
     group.add(legRGroup);
     this.playerLegR = legRGroup;
 
-    // Left Arm Group (Shoulder + Arm + Forearm)
+    // Arms
     const armLGroup = new THREE.Group();
     armLGroup.position.set(-0.52, 1.55, 0);
     const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 10), matArmor);
     armL.position.y = -0.3;
     armLGroup.add(armL);
     group.add(armLGroup);
-    this.playerArmL = armLGroup;
 
-    // Right Arm Group holding Rifle
     const armRGroup = new THREE.Group();
     armRGroup.position.set(0.52, 1.55, 0);
     const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 10), matArmor);
     armR.position.y = -0.3;
     armRGroup.add(armR);
     group.add(armRGroup);
-    this.playerArmR = armRGroup;
 
-    // Detailed Assault Rifle Weapon
+    // Rifle
     const gunGroup = new THREE.Group();
     const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.95), matGun);
     gunGroup.add(gunBody);
@@ -159,10 +149,6 @@ export class ZombieHordeGame {
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.05, 0.65);
     gunGroup.add(barrel);
-    const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.35, 0.16), matGun);
-    magazine.position.set(0, -0.22, 0.1);
-    gunGroup.add(magazine);
-
     gunGroup.position.set(0.35, 1.25, 0.45);
     group.add(gunGroup);
 
@@ -171,27 +157,22 @@ export class ZombieHordeGame {
 
   createHighDetailHumanoidZombie() {
     const group = new THREE.Group();
-    const matSkin = new THREE.MeshStandardMaterial({ color: 0x1fc752, roughness: 0.7 });
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0x22cc55, roughness: 0.7 });
     const matTornCloth = new THREE.MeshStandardMaterial({ color: 0x273027, roughness: 0.9 });
     const matRedEyes = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 
     // Head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), matSkin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), matSkin);
     head.position.y = 2.15;
     group.add(head);
 
-    // Glowing Eyes
+    // Eyes
     const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), matRedEyes);
     eyeL.position.set(-0.11, 2.18, 0.28);
     group.add(eyeL);
     const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), matRedEyes);
     eyeR.position.set(0.11, 2.18, 0.28);
     group.add(eyeR);
-
-    // Jaw / Mouth
-    const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.1, 0.22), matSkin);
-    jaw.position.set(0, 2.0, 0.2);
-    group.add(jaw);
 
     // Torso
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.75, 0.45), matTornCloth);
@@ -213,7 +194,7 @@ export class ZombieHordeGame {
     legRGroup.add(legR);
     group.add(legRGroup);
 
-    // Outstretched Zombie Arms
+    // Arms
     const armLGroup = new THREE.Group();
     armLGroup.position.set(-0.5, 1.55, 0);
     const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.75, 10), matSkin);
@@ -264,7 +245,7 @@ export class ZombieHordeGame {
   }
 
   spawnHordeWave() {
-    const zombieCount = 15 + this.wave * 8;
+    const zombieCount = 12 + this.wave * 6;
     for (let i = 0; i < zombieCount; i++) {
       this.spawnZombie();
     }
@@ -272,7 +253,7 @@ export class ZombieHordeGame {
 
   spawnZombie() {
     const angle = Math.random() * Math.PI * 2;
-    const distance = 25 + Math.random() * 15;
+    const distance = 22 + Math.random() * 12;
     const zx = this.player.x + Math.cos(angle) * distance;
     const zz = this.player.z + Math.sin(angle) * distance;
 
@@ -282,8 +263,8 @@ export class ZombieHordeGame {
 
     this.zombies.push({
       mesh: zombieMesh,
-      hp: 1, // 1-HIT GUARANTEED SATISFYING DIE! (NO MORE BUG!)
-      speed: 0.045
+      hp: 1, // 1-HIT KILL INSTANT SATISFACTION!
+      speed: 0.04
     });
   }
 
@@ -325,9 +306,13 @@ export class ZombieHordeGame {
       this.fireBulletAtNearest();
     }
 
-    // Update Bullets & PERFECT 2D-XZ COLLISION DETECTION (100% FIX FOR COLLISION BUG!)
+    // UPDATE BULLETS WITH CONTINUOUS LINE-SEGMENT COLLISION (100% IMPOSSIBLE TO MISS BUG FIX!)
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
+
+      const oldX = b.mesh.position.x;
+      const oldZ = b.mesh.position.z;
+
       b.mesh.position.x += b.vx;
       b.mesh.position.z += b.vz;
       b.life--;
@@ -338,36 +323,35 @@ export class ZombieHordeGame {
         continue;
       }
 
-      const bx = b.mesh.position.x;
-      const bz = b.mesh.position.z;
+      const newX = b.mesh.position.x;
+      const newZ = b.mesh.position.z;
 
+      // Check collision against all zombies using point-to-line-segment distance!
       for (let j = this.zombies.length - 1; j >= 0; j--) {
         const zm = this.zombies[j];
         const zx = zm.mesh.position.x;
         const zz = zm.mesh.position.z;
-        
-        // 2D Radial Collision Distance (Fixes Y-height mismatch bug completely!)
-        const distXZ = Math.hypot(bx - zx, bz - zz);
 
-        if (distXZ < 1.4) {
-          zm.hp -= 100; // Guaranteed Kill
+        // Calculate minimum distance between Zombie center (zx, zz) and Bullet path line segment (oldX, oldZ) -> (newX, newZ)
+        const distToSegment = this.pointToSegmentDistance(zx, zz, oldX, oldZ, newX, newZ);
+
+        if (distToSegment < 1.8) { // Generous 1.8 unit hit zone!
+          zm.hp = 0; // INSTANT DEAD!
           soundEngine.playZombieHit();
           this.spawnHitParticle(b.mesh.position);
 
           this.scene.remove(b.mesh);
           this.bullets.splice(i, 1);
 
-          if (zm.hp <= 0) {
-            soundEngine.playZombieDeath();
-            this.spawnDeathParticles(zm.mesh.position);
-            this.scene.remove(zm.mesh);
-            this.zombies.splice(j, 1);
-            this.kills++;
+          soundEngine.playZombieDeath();
+          this.spawnDeathParticles(zm.mesh.position);
+          this.scene.remove(zm.mesh);
+          this.zombies.splice(j, 1);
+          this.kills++;
 
-            if (this.zombies.length === 0) {
-              this.wave++;
-              this.spawnHordeWave();
-            }
+          if (this.zombies.length === 0) {
+            this.wave++;
+            this.spawnHordeWave();
           }
           break;
         }
@@ -416,6 +400,17 @@ export class ZombieHordeGame {
     }
   }
 
+  // Math Helper: Distance from Point (px, pz) to Line Segment (x1, z1) -> (x2, z2)
+  pointToSegmentDistance(px, pz, x1, z1, x2, z2) {
+    const l2 = (x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1);
+    if (l2 === 0) return Math.hypot(px - x1, pz - z1);
+    let t = ((px - x1) * (x2 - x1) + (pz - z1) * (z2 - z1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * (x2 - x1);
+    const projZ = z1 + t * (z2 - z1);
+    return Math.hypot(px - projX, pz - projZ);
+  }
+
   fireBulletAtNearest() {
     let nearestZombie = null;
     let minDist = Infinity;
@@ -439,18 +434,18 @@ export class ZombieHordeGame {
 
     this.playerMesh.rotation.y = targetAngle;
 
-    const bulletGeo = new THREE.SphereGeometry(0.25, 8, 8);
+    const bulletGeo = new THREE.SphereGeometry(0.3, 8, 8);
     const bulletMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
     const bulletMesh = new THREE.Mesh(bulletGeo, bulletMat);
     bulletMesh.position.set(this.player.x, 1.25, this.player.z);
     this.scene.add(bulletMesh);
 
-    const speed = 0.95;
+    const speed = 0.85;
     this.bullets.push({
       mesh: bulletMesh,
       vx: Math.sin(targetAngle) * speed,
       vz: Math.cos(targetAngle) * speed,
-      life: 40
+      life: 45
     });
 
     soundEngine.playGunfire();
@@ -475,7 +470,7 @@ export class ZombieHordeGame {
   spawnDeathParticles(pos) {
     for (let i = 0; i < 12; i++) {
       const pGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-      const pMat = new THREE.MeshBasicMaterial({ color: 0x1fc752 });
+      const pMat = new THREE.MeshBasicMaterial({ color: 0x22cc55 });
       const pMesh = new THREE.Mesh(pGeo, pMat);
       pMesh.position.copy(pos);
       this.scene.add(pMesh);
